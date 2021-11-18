@@ -3,7 +3,7 @@
 
     <!-- configuring CLI arguments -->
     <arg name="robot" default="rover_v1"/>
-    <!-- <arg name="world" default="empty"/> -->
+    <arg name="world" default="empty"/>
     <arg name="robot_desc" default="$(find rover_sim)/models/rover_v1/model.urdf" />
     <arg name="gazebo" default="false" />   <!-- launch the full Gazebo gui window (resource intensive)-->
     <arg name="rviz" default="true"/>   <!-- use rviz window for robot information -->
@@ -11,7 +11,7 @@
 
     <!-- launching gazebo_ros, which is just gazebo with ros integrated -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
-        <!-- <arg name="world_name" value="$(find ugv_sim)/worlds/$(arg world).world"/>  -->
+        <arg name="world_name" value="$(find rover_sim)/worlds/$(arg world).world"/> 
         <arg name="paused" value="false"/>
         <arg name="use_sim_time" value="true"/>
         <arg name="gui" value="$(arg gazebo)"/>
