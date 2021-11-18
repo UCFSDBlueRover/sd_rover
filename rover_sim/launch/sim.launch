@@ -1,0 +1,42 @@
+<launch>
+    <param name="/use_sim_time" value="true" />
+
+    <!-- configuring CLI arguments -->
+    <arg name="robot" default="rover_v1"/>
+    <!-- <arg name="world" default="empty"/> -->
+    <arg name="robot_desc" default="$(find rover_sim)/models/rover_v1/model.urdf" />
+    <arg name="gazebo" default="false" />   <!-- launch the full Gazebo gui window (resource intensive)-->
+    <arg name="rviz" default="true"/>   <!-- use rviz window for robot information -->
+    <arg name="rviz_cfg" default="$(find rover_sim)/rviz/rover_v1.rviz" />
+
+    <!-- launching gazebo_ros, which is just gazebo with ros integrated -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <!-- <arg name="world_name" value="$(find ugv_sim)/worlds/$(arg world).world"/>  -->
+        <arg name="paused" value="false"/>
+        <arg name="use_sim_time" value="true"/>
+        <arg name="gui" value="$(arg gazebo)"/>
+        <arg name="recording" value="false"/> 
+        <arg name="debug" value="false"/>
+        <arg name="verbose" value="true"/>
+    </include>
+
+
+    <!-- load robot description to parameter server (for robot_state_publisher) -->
+    <param name="robot_description" textfile="$(arg robot_desc)" />
+
+     <!-- spawn our model in gazebo -->
+    <node pkg="gazebo_ros" type="spawn_model" name="spawn_$(arg robot)"
+        args="-param robot_description -urdf -model $(arg robot)" respawn="false"/>
+
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+
+    <!-- use robot description to publish robot tf tree -->
+    <!-- tf_prefix: robot tf transforms are prepended with bowser2 to match model.sdf plugin convention-->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+        <param name="tf_prefix" type="string" value=""/>
+    </node>
+
+    <!-- launches rviz with specified configuration (if CLI arg is true)-->
+    <node if="$(arg rviz)" name="rviz" pkg="rviz" type="rviz" args="-d $(arg rviz_cfg)"/>
+
+</launch>
