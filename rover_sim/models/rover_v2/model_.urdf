@@ -1,0 +1,304 @@
+<robot name="rover_v1" xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <gazebo>
+        <static>false</static>
+    </gazebo>
+
+    <link name="base_link">
+        <gazebo reference="base_link">
+            <static>true</static>
+            <material>Gazebo/Black</material>
+            <gravity>true</gravity>
+        </gazebo>
+        <collision name="base_link_collision">
+            <origin xyz="0 0 0" rpy="0 -1.5708 0"/>
+            <geometry>
+                <cylinder radius=".0635" length=".2"/>
+            </geometry>
+        </collision>
+        <visual name="base_link_visual">
+            <origin xyz="0 0 0" rpy="0 -1.5708 0"/>
+            <geometry>
+                <cylinder radius=".0635" length=".2"/>
+            </geometry>
+        </visual>
+        <inertial name="base_link_inertia">
+            <mass value="2"/>
+            <origin xyz="0 0 0" rpy="0 -1.5708 0"/>
+            <!-- https://en.wikipedia.org/wiki/List_of_moments_of_inertia -->
+            <inertia ixx=".0086827917" ixy="0" ixz="0" iyy=".0086827917" iyz="0" izz=".00403225"/>
+        </inertial>
+    </link>
+
+    <link name="right_wheel">
+        <gazebo reference="right_wheel">
+            <!-- <material>Gazebo/Black</material> -->
+            <gravity>true</gravity>
+        </gazebo>
+        <collision>
+            <origin xyz="0 0 0" rpy="-1.5707  0      0"/>
+            <geometry>
+                <cylinder radius="0.02" length="0.05"/>
+            </geometry>
+        </collision>
+        <visual name="right_wheel">
+            <origin xyz="0 0 0" rpy="-3.14159  0 0"/>
+            <geometry>
+                <mesh filename="package://ugv_sim/meshes/wheel.stl" scale="0.15 0.15 0.15"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <mass value=".2"/>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <!-- <inertia ixx=".0002866667" ixy="0" ixz="0" iyy=".0002866667" iyz="0" izz="0.00049"/> -->
+            <inertia ixx=".0000616666" ixy="0" ixz="0" iyy=".0000616666" iyz="0" izz="0.00004"/>
+        </inertial>
+    </link>
+    <joint name="right_joint" type="continuous">
+        <gazebo reference="right_joint">
+            <!--  -->
+        </gazebo>
+        <parent link="base_link"/>
+        <child link="right_wheel"/>
+        <origin xyz="0.13 .04 -0.05" rpy="0 0 -1.5708"/>
+        <axis xyz="0 1 0"/>
+        <!-- <limit effort="10" velocity="5"/> -->
+    </joint>
+
+    <link name="left_wheel">
+        <gazebo reference="left_wheel">
+            <!-- <material>Gazebo/Black</material> -->
+            <gravity>true</gravity>
+        </gazebo>
+        <collision>
+            <origin xyz="0 0 0" rpy="-1.5707  0      0"/>
+            <geometry>
+                <cylinder radius="0.02" length="0.05"/>
+            </geometry>
+        </collision>
+        <visual name="left_wheel">
+            <origin xyz="0 0 0" rpy="-3.14159  0 0"/>
+            <geometry>
+                <mesh filename="package://ugv_sim/meshes/wheel.stl" scale="0.15 0.15 0.15"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <mass value=".2"/>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <!-- <inertia ixx=".0002866667" ixy="0" ixz="0" iyy=".0002866667" iyz="0" izz="0.00049"/> -->
+            <inertia ixx=".0000616666" ixy="0" ixz="0" iyy=".0000616666" iyz="0" izz="0.00004"/>
+        </inertial>
+    </link>
+    <joint name="left_joint" type="continuous">
+        <gazebo reference="left_joint">
+            <!--  -->
+        </gazebo>
+        <parent link="base_link"/>
+        <child link="left_wheel"/>
+        <origin xyz="-0.13 .04 -0.05" rpy="0 0 -1.5708"/>
+        <axis xyz="0 1 0"/>
+        <!-- <limit effort="10" velocity="5"/> -->
+    </joint>
+
+    <link name="back_right_wheel">
+        <gazebo reference="back_right_wheel">
+            <!-- <material>Gazebo/Black</material> -->
+            <gravity>true</gravity>
+        </gazebo>
+        <collision>
+            <origin xyz="0 0 0" rpy="-1.5707  0      0"/>
+            <geometry>
+                <cylinder radius="0.02" length="0.05"/>
+            </geometry>
+        </collision>
+        <visual name="back_right_wheel">
+            <origin xyz="0 0 0" rpy="-3.14159  0 0"/>
+            <geometry>
+                <mesh filename="package://ugv_sim/meshes/wheel.stl" scale="0.15 0.15 0.15"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <mass value=".2"/>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <!-- <inertia ixx=".0002866667" ixy="0" ixz="0" iyy=".0002866667" iyz="0" izz="0.00049"/> -->
+            <inertia ixx=".0000616666" ixy="0" ixz="0" iyy=".0000616666" iyz="0" izz="0.00004"/>
+        </inertial>
+    </link>
+    <joint name="back_right_joint" type="continuous">
+        <gazebo reference="back_right_joint">
+            <!--  -->
+        </gazebo>
+        <parent link="base_link"/>
+        <child link="back_right_wheel"/>
+        <origin xyz="0.13 -.04 -0.05" rpy="0 0 -1.5708"/>
+        <axis xyz="0 1 0"/>
+        <!-- <limit effort="10" velocity="5"/> -->
+    </joint>
+
+
+    <link name="back_left_wheel">
+        <gazebo reference="back_left_wheel">
+            <!-- <material>Gazebo/Black</material> -->
+            <gravity>true</gravity>
+        </gazebo>
+        <collision>
+            <origin xyz="0 0 0" rpy="-1.5707  0      0"/>
+            <geometry>
+                <cylinder radius="0.02" length="0.05"/>
+            </geometry>
+        </collision>
+        <visual name="back_left_wheel">
+            <origin xyz="0 0 0" rpy="-3.14159  0 0"/>
+            <geometry>
+                <mesh filename="package://ugv_sim/meshes/wheel.stl" scale="0.15 0.15 0.15"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <mass value=".2"/>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <!-- <inertia ixx=".0002866667" ixy="0" ixz="0" iyy=".0002866667" iyz="0" izz="0.00049"/> -->
+            <inertia ixx=".0000616666" ixy="0" ixz="0" iyy=".0000616666" iyz="0" izz="0.00004"/>
+        </inertial>
+    </link>
+    <joint name="back_left_joint" type="continuous">
+        <gazebo reference="back_left_joint">
+            <!--  -->
+        </gazebo>
+        <parent link="base_link"/>
+        <child link="back_left_wheel"/>
+        <origin xyz="-0.13 -.04 -0.05" rpy="0 0 -1.5708"/>
+        <axis xyz="0 1 0"/>
+        <!-- <limit effort="10" velocity="5"/> -->
+    </joint>
+
+    <!-- houses the depth camera sensor -->
+    <link name="camera_link">
+        <gazebo reference="camera_link">
+            <static>true</static>
+            <!--  -->
+        </gazebo>
+        <collision name="camera_collision">
+            <pose>0 0 0.1 0 0 0</pose>
+            <geometry>
+                <box size=".05 0.05 0.01"/>
+            </geometry>
+        </collision>
+        <visual name="camera_visual">
+            <pose>0 0 0 0 0 0</pose>
+            <geometry>
+                <box size=".05 0.05 0.01"/>
+            </geometry>
+        </visual>
+        <inertial>
+            <mass value="0.0"/>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
+        </inertial>
+    </link>
+    <joint name="camera_joint" type="fixed">
+        <gazebo reference="camera_joint">
+            <!--  -->
+        </gazebo>
+        <parent link="base_link"/>
+        <child link="camera_link"/>
+        <origin xyz="0.0  .04  0.0" rpy="0 0 1.5708"/>
+        <axis xyz="0 1 0"/>
+        <limit lower="0" upper="0" effort="0" velocity="0"/>
+    </joint>
+
+    <gazebo>
+        <!-- differential drive plugin; publishes odom frame-->
+        <plugin filename="libgazebo_ros_diff_drive.so" name="diff_drive_controller">
+            <robotNamespace>rover_v1</robotNamespace>    
+            <rosDebugLevel>debug</rosDebugLevel>
+
+            <!-- 'physical' characteristics -->
+            <leftJoint>left_joint</leftJoint>
+            <rightJoint>right_joint</rightJoint>
+            <wheelSeparation>.26</wheelSeparation>
+            <wheelDiameter>0.04</wheelDiameter>
+            <wheelTorque>.01</wheelTorque>   <!-- in Nm -->
+
+            <!-- plugin characteristics -->
+            <odometrySource>world</odometrySource> 
+            <publishOdom>true</publishOdom> 
+            <updateRate>100</updateRate>
+
+            <!-- tf -->
+            <publishTf>true</publishTf> <!-- publish the transforms -->
+            <publishOdomTF>true</publishOdomTF>
+            <publishWheelTF>false</publishWheelTF>
+            <odometryFrame>odom</odometryFrame>
+            <robotBaseFrame>base_link</robotBaseFrame>
+
+            <!-- ros messaging -->
+            <commandTopic>/cmd_vel</commandTopic> <!-- listens to -->
+            <odometryTopic>odom</odometryTopic> <!-- publishes on -->
+
+            <!-- Set to true to swap right and left wheels, defaults to true -->
+            <legacyMode>true</legacyMode>
+        </plugin>
+    </gazebo>
+
+    <gazebo reference="camera_link">
+        <sensor name="depth_sensor" type="depth">
+            <!-- Set always_on only for sensor, not on plugin -->
+            <always_on>0</always_on>
+            <!-- Set update_rate only for sensor, not on plugin -->
+            <updateRate>20</updateRate>
+
+            <camera name="depth_cam">
+                <horizontal_fov>1.57079</horizontal_fov>
+                <image>
+                    <width>640</width>
+                    <height>480</height>
+                </image>
+                <clip>
+                    <near>0.5</near>
+                    <far>20</far>
+                </clip>
+                <!-- no distortions: "ideal" camera -->
+                <distortion>
+                    <k1>0.0</k1>
+                    <k2>0.0</k2>
+                    <k3>0.0</k3>
+                    <p1>0.0</p1>
+                    <p2>0.0</p2>
+                    <center>0.0 0.0</center>
+                </distortion>
+            </camera>
+
+            <!-- <visualize>true</visualize> -->
+            
+            <plugin name="depth_cam_plugin" filename="libgazebo_ros_depth_camera.so">
+                <robotNamespace>rover_v1</robotNamespace>
+                <always_on>true</always_on>
+                <updateRate>0.0</updateRate> <!-- use sensor rate -->
+                <cameraName>depth_cam</cameraName>
+
+                <baseline>0.05</baseline>
+                <pointCloudCutoff>0.05</pointCloudCutoff>
+                <pointCloudCutoffMax>20</pointCloudCutoffMax>
+
+                <!-- configure output topics; will be prepended with robotNamespace value (AKA relative names) -->
+                <imageTopicName>image/image</imageTopicName>
+                <cameraInfoTopicName>image/camera_info</cameraInfoTopicName>
+                <depthImageTopicName>depth/image</depthImageTopicName>
+                <depthImageCameraInfoTopicName>depth/camera_info</depthImageCameraInfoTopicName>
+                <pointCloudTopicName>depth/points</pointCloudTopicName>
+
+                <!-- Set TF frame name. If empty, defaults to link name (i.e. "link_name") -->
+                <frameName>/camera_link</frameName> <!-- namespaced -->
+                
+                <distortionK1>0.0</distortionK1>
+                <distortionK2>0.0</distortionK2>
+                <distortionK3>0.0</distortionK3>
+                <distortionT1>0.0</distortionT1>
+                <distortionT2>0.0</distortionT2>
+            </plugin>
+        </sensor>
+
+
+    </gazebo>
+
+
+</robot>
