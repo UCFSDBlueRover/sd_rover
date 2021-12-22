@@ -1,0 +1,13 @@
+<sdf version="1.4">
+  <world name="default">
+      <include>
+          <uri>model://construction_barrel</uri>
+          <pose>0 -2 0 0 0 0</pose>
+      </include>
+      <include>
+          <uri>model://grass_plane</uri>
+          <pose>0 0 0 0 0 0</pose>
+      </include>
+
+  </world>
+</sdf>
