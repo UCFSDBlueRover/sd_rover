@@ -267,7 +267,6 @@
         </sensor>
     </gazebo>
 
-
     <gazebo>    <!-- can't put a 'reference' on this or the GPS doesn't work. hmmmmm... -->
         <!-- http://wiki.ros.org/hector_gazebo_plugins#GazeboRosGps -->
         <plugin name="gps_controller" filename="libhector_gazebo_ros_gps.so">
@@ -290,5 +289,47 @@
         </plugin>
     </gazebo>
 
+    <!-- IMU sensor -->
+    <link name="imu_link">
+        <visual name="imu_link_visual">
+            <geometry>
+                <box size="0.1 0.1 0.1"/>
+            </geometry>
+        </visual>
+        <collision name="imu_link_collision">
+            <geometry>
+                <box size="0.1 0.1 0.1"/>
+            </geometry>
+        </collision>
+        <inertial name="imu_link_inertia">
+            <mass value="0.05"/>
+            <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
+        </inertial>
+
+        <gazebo reference="imu">
+            <sensor name="imu_sensor" type="imu">
+                <always_on>true</always_on> <!-- required TRUE -->
+                <update_rate>100</update_rate>
+                <visualize>false</visualize>
+                <topic>__default_topic__</topic>
+                <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+                    <rosDebugLevel>debug</rosDebugLevel>
+                    <topicName>imu</topicName>
+                    <updateRateHZ>10.0</updateRateHZ>
+                    <bodyName>imu_link</bodyName>
+                    <frameName>imu_link</frameName>
+                    <gaussianNoise>0.0</gaussianNoise>
+                    <xyzOffset>0 0 0</xyzOffset>
+                    <rpyOffset>0 0 0</rpyOffset>
+                    <initialOrientationAsReference>false</initialOrientationAsReference>
+                </plugin>
+            </sensor>
+        </gazebo>
+    </link>
+    <joint name="imu_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="imu_link"/>
+        <origin xyz="0.0  0.0  0.0" rpy="0 0 -1.5708"/> <!-- rotated to match camera (to face forward)-->
+    </joint>
 
 </robot>
