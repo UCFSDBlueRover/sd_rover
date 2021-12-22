@@ -2,7 +2,7 @@
     <param name="/use_sim_time" value="true" />
 
     <!-- configuring CLI arguments -->
-    <arg name="robot" default="rover_v1"/>
+    <arg name="robot" default="rover_v2"/>
     <arg name="world" default="empty"/>
     <arg name="robot_desc" default="$(find rover_sim)/models/$(arg robot)/model.urdf" />
     <arg name="gazebo" default="false" />   <!-- launch the full Gazebo gui window (resource intensive)-->
