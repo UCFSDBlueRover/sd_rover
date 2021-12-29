@@ -9,6 +9,7 @@ import smach, smach_ros
 import std_msgs.msg as std
 import nav_msgs.msg as nav
 import geometry_msgs.msg as geom
+import rover_msg.msg as rov
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 
 class Boot(smach.State):
@@ -16,13 +17,12 @@ class Boot(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['error', 'boot_success'])
 
-        # TODO: define flags, can be DS or just a big hardcoded list of them
-        self.flags = None
-
         # TODO: define message callbacks for topics to watch and throw flags
         # what needs to be verified before we can begin?
 
         # RX HEARTBEAT
+        rospy.Subscriber('/heartbeat', rov.Heartbeat, callback=self.hb_callback)
+        self._hb_flag = False
 
         # RX data from all sensor stream topics
 
@@ -32,10 +32,15 @@ class Boot(smach.State):
 
         while not rospy.is_shutdown():
 
-            if self.flags:
+            if self._hb_flag:
                 return 'boot_success'
 
             # what constitutes an error?
+
+
+    def hb_callback(self, data):
+
+        self._hb_flag = True
 
 class Standby(smach.State):
 
