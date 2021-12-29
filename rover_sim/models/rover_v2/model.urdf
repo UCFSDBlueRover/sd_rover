@@ -289,47 +289,28 @@
         </plugin>
     </gazebo>
 
-    <!-- IMU sensor -->
-    <link name="imu_link">
-        <visual name="imu_link_visual">
-            <geometry>
-                <box size="0.1 0.1 0.1"/>
-            </geometry>
-        </visual>
-        <collision name="imu_link_collision">
-            <geometry>
-                <box size="0.1 0.1 0.1"/>
-            </geometry>
-        </collision>
-        <inertial name="imu_link_inertia">
-            <mass value="0.05"/>
-            <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
-        </inertial>
+    <!-- first IMU, base-link relative -->
+    <gazebo>
+        <plugin name="imu_plugin" filename="libgazebo_ros_imu.so">
+            <alwaysOn>true</alwaysOn>
+            <bodyName>base_link</bodyName>
+            <topicName>/base_imu</topicName>
+            <serviceName>imu_service</serviceName>
+            <gaussianNoise>0.0</gaussianNoise>
+            <updateRate>20.0</updateRate>
+        </plugin>
+    </gazebo>
 
-        <gazebo reference="imu">
-            <sensor name="imu_sensor" type="imu">
-                <always_on>true</always_on> <!-- required TRUE -->
-                <update_rate>100</update_rate>
-                <visualize>false</visualize>
-                <topic>__default_topic__</topic>
-                <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
-                    <rosDebugLevel>debug</rosDebugLevel>
-                    <topicName>imu</topicName>
-                    <updateRateHZ>10.0</updateRateHZ>
-                    <bodyName>imu_link</bodyName>
-                    <frameName>imu_link</frameName>
-                    <gaussianNoise>0.0</gaussianNoise>
-                    <xyzOffset>0 0 0</xyzOffset>
-                    <rpyOffset>0 0 0</rpyOffset>
-                    <initialOrientationAsReference>false</initialOrientationAsReference>
-                </plugin>
-            </sensor>
-        </gazebo>
-    </link>
-    <joint name="imu_joint" type="fixed">
-        <parent link="base_link"/>
-        <child link="imu_link"/>
-        <origin xyz="0.0  0.0  0.0" rpy="0 0 -1.5708"/> <!-- rotated to match camera (to face forward)-->
-    </joint>
+    <!-- first IMU, base-link relative -->
+    <gazebo>
+        <plugin name="imu_plugin" filename="libgazebo_ros_imu.so">
+            <alwaysOn>true</alwaysOn>
+            <bodyName>camera_link</bodyName>
+            <topicName>/camera_imu</topicName>
+            <serviceName>imu_service2</serviceName>
+            <gaussianNoise>0.0</gaussianNoise>
+            <updateRate>20.0</updateRate>
+        </plugin>
+    </gazebo>
 
 </robot>
