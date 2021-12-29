@@ -177,7 +177,7 @@
     <gazebo>
         <!-- differential drive plugin; publishes odom frame-->
         <plugin filename="libgazebo_ros_diff_drive.so" name="diff_drive_controller">
-            <robotNamespace>rover_v1</robotNamespace>    
+            <robotNamespace>rover_v2</robotNamespace>    
             <rosDebugLevel>debug</rosDebugLevel>
 
             <!-- 'physical' characteristics -->
@@ -239,7 +239,7 @@
             <visualize>true</visualize>
             
             <plugin name="depth_cam_plugin" filename="libgazebo_ros_depth_camera.so">
-                <robotNamespace>rover_v1</robotNamespace>
+                <robotNamespace>rover_v2</robotNamespace>
                 <always_on>true</always_on>
                 <updateRate>0.0</updateRate> <!-- use sensor rate -->
                 <cameraName>depth_cam</cameraName>
