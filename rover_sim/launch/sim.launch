@@ -8,6 +8,7 @@
     <arg name="gazebo" default="false" />   <!-- launch the full Gazebo gui window (resource intensive)-->
     <arg name="rviz" default="true"/>   <!-- use rviz window for robot information -->
     <arg name="rviz_cfg" default="$(find rover_sim)/rviz/rover_v1.rviz" />
+    <arg name="sim_heartbeat" default="true"/>
 
     <!-- launching gazebo_ros, which is just gazebo with ros integrated -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
@@ -38,5 +39,7 @@
 
     <!-- launches rviz with specified configuration (if CLI arg is true)-->
     <node if="$(arg rviz)" name="rviz" pkg="rviz" type="rviz" args="-d $(arg rviz_cfg)"/>
+
+    <node if="$(arg sim_heartbeat)" name="heartbeat_pub" pkg="rover_sim" type="heartbeat.py" />
 
 </launch>
