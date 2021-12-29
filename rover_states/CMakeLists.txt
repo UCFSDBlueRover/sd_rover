@@ -10,7 +10,6 @@ project(rover_states)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
-  smach-ros
 )
 
 ## System dependencies are found with CMake's conventions
