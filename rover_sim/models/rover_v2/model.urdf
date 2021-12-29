@@ -42,7 +42,7 @@
         <visual name="right_wheel">
             <origin xyz="0 0 0" rpy="0  0 0"/>
             <geometry>
-                <mesh filename="model://rover_v2/meshes/wheel.stl" scale="0.15 0.15 0.15"/>
+                <mesh filename="package://rover_sim/models/rover_v2/meshes/wheel.stl" scale="0.15 0.15 0.15"/>
             </geometry>
         </visual>
         <inertial>
@@ -77,7 +77,7 @@
         <visual name="left_wheel">
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="model://rover_v2/meshes/wheel.stl" scale="0.15 0.15 0.15"/>
+                <mesh filename="package://rover_sim/models/rover_v2/meshes/wheel.stl" scale="0.15 0.15 0.15"/>
             </geometry>
         </visual>
         <inertial>
@@ -112,7 +112,7 @@
         <visual name="back_wheel_visual">
             <origin xyz="0 0 0" rpy="-3.14159  0 0"/>
             <geometry>
-                <mesh filename="model://rover_v2/meshes/wheel.stl" scale="0.15 0.15 0.15"/>
+                <mesh filename="package://rover_sim/models/rover_v2/meshes/wheel.stl" scale="0.15 0.15 0.15"/>
             </geometry>
         </visual>
         <inertial>
