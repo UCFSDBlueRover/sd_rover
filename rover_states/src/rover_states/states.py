@@ -5,6 +5,8 @@ import rospy
 import actionlib
 import smach, smach_ros
 
+from enum import Enum
+
 # ROS messages
 import std_msgs.msg as std
 import nav_msgs.msg as nav
@@ -37,7 +39,6 @@ class Boot(smach.State):
 
             # what constitutes an error?
 
-
     def hb_callback(self, data):
 
         self._hb_flag = True
@@ -49,26 +50,27 @@ class Standby(smach.State):
                                    output_keys=['pose_target', 'end_status', 'end_reason'] )
 
         # flags
-        self.rc_preempt = False
-        self.pose_preempt = False
+        self._rc_preempt = False
+        self._pose_preempt = False
+        self._end = False
 
         self._pose_target = geom.PoseStamped()
 
-        # TODO: subscriber to RC message
-        # note: we can either do a standalone RC message, or just subscribe to the larger Command message
-        rc_sub = rospy.Subscriber('/command', std.String, callback=self.cmd_callback)
-
+        cmd_sub = rospy.Subscriber('/command', rov.Cmd, callback=self.cmd_callback)
 
     def execute(self, userdata):
 
         while not rospy.is_shutdown():
 
+            # if we received motor commands, 
             if self.rc_preempt:
-                rospy.logdebug("Standby preempted by RC command")
+                rospy.logdebug("Standby preempted by RC command.")
                 return 'rc_preempt'
             # if we received a pose in Command msg, pass that as output of state
             if self.pose_preempt:
                 userdata.pose_target = self._pose_target
+                rospy.logdebug("Standby preempted by pose target.")
+                return 'got_pose'
 
             # check for errors
             # if err:
@@ -77,10 +79,11 @@ class Standby(smach.State):
             #   return 'end'
 
             # check for user-initiated end
-            # if end:
-            #   userdata.end_reason = 'User initiated end state.'
-            #   userdata.end_status = 'success'
-            #   return 'end'
+            if self._end:
+                rospy.logdebug('Standby preempted by end signal.')
+                userdata.end_reason = 'User initiated end state.'
+                userdata.end_status = 'success'
+                return 'end'
 
 
     def cmd_callback(self, data):
@@ -90,9 +93,17 @@ class Standby(smach.State):
         # assumes that pose_target field of Command msg is empty if we don't want waypoint navigation
         if data.pose_target is not None:
             self._pose_target = data.pose_target
-            self.pose_preempt = True
-        
-        pass
+            self._pose_preempt = True
+
+        if data.rc_preempt is not None:
+            if data.rc_preempt.data:
+                self._rc_preempt = True
+            
+        # check for the shutdown flag    
+        if data.shutdown is not None:
+            if data.shutdown.data:
+                self._end = True
+
 
 class Waypoint(smach.State):
 
@@ -220,10 +231,13 @@ def main():
     # initialize ROS node
     rospy.init_node('rover_sm', anonymous=True)
 
-    # TODO: publisher for "sm status" message
+    # TODO: publisher for Telemetry message
 
     # create state machine with outcomes
     sm = smach.StateMachine(outcomes=['success', 'err'])
+
+    # declare userdata
+    sm.userdata.pose_target = geom.PoseStamped()
 
     # define states within sm
     with sm:
