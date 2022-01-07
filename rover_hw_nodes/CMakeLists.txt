@@ -10,7 +10,7 @@ project(rover_hw_nodes)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
-  cv_bridge
+#  cv_bridge
   image_transport
   sensor_msgs
   std_msgs
@@ -155,6 +155,7 @@ add_executable(imx219_stereo_cam_node src/imx219_stereo_cam_node.cpp)
 target_link_libraries(imx219_stereo_cam_node
   ${catkin_LIBRARIES}
   ${OpenCV_INCLUDE_DIRS}
+  ${OpenCV_LIBRARIES}
 )
 
 #############
