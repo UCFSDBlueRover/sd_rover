@@ -1,46 +1,83 @@
 #!/usr/bin/env python3
 
+''' given a Twist message, controls the motors of the rover '''
+
+# system imports
 import RPi.GPIO as GPIO
 import time, signal
+from enum import Enum
 
-left_output = 33
-right_output = 32
+# ros imports
+import rospy
 
-GPIO.setmode(GPIO.BOARD)
+# ROS messages
+from geometry_msgs.msg import Twist
 
-# set DIR pins to OUT
-GPIO.setup(left_output, GPIO.OUT, initial=GPIO.LOW)
-GPIO.setup(right_output, GPIO.OUT, initial=GPIO.LOW)
+# class Pins(Enum):
+# 	LEFT_OUT = 33
+# 	RIGHT_OUT = 32
 
-# set PWM pins to logic HIGH
-GPIO.setup(35, GPIO.OUT, initial=GPIO.LOW)
-GPIO.setup(36, GPIO.OUT, initial=GPIO.LOW)
-GPIO.output(35, GPIO.HIGH)
-GPIO.output(36, GPIO.HIGH)
+class BaseControllerNode:
 
-p_l = GPIO.PWM(left_output, 10000)
-p_r = GPIO.PWM(right_output, 10000)
+	def __init__(self, hw=True, topic="/cmd_vel", cb=self.twist_cb):
+		
+		twist_sub = rospy.Subscriber(topic, Twist, callback=cb)
+		
+		self._hw = hw
+		# configure for jetson Nano hardware
+		if self._hw:
+			
+			GPIO.setmode(GPIO.BOARD)
+			
+			self.PIN_L_OUT = 33
+			self.PIN_R_OUT = 32
+			
+			# set DIR pins to OUT
+			GPIO.setup(self.PIN_L_OUT, GPIO.OUT, initial=GPIO.LOW)
+			GPIO.setup(self.PIN_R_OUT, GPIO.OUT, initial=GPIO.LOW)
+				
+			# TODO: either get a hardware logic level shifter, or get rid of this block entirely 
+			# set PWM pins to logic HIGH
+			# GPIO.setup(35, GPIO.OUT, initial=GPIO.LOW)
+			# GPIO.setup(36, GPIO.OUT, initial=GPIO.LOW)
+			# GPIO.output(35, GPIO.HIGH)
+			# GPIO.output(36, GPIO.HIGH)
+				
+			# configure PWM
+			self.PWM_L = GPIO.PWM(self.PIN_L_OUT, 10000)
+			self.PWM_R = GPIO.PWM(self.PIN_R_OUT, 10000)
 
-def handler(signum, frame):
+			# start PWM for motors at stop (50)
+			self.PWM_L.start(50)
+			self.PWM_R.start(50)
 	
-	p_l.stop()
-	p_r.stop()
-	GPIO.cleanup()
+	def run(self):
+	
+		rospy.spin()
+						
+	def twist_cb(self, data):
+		print(data)
+		pass
 
+	def ctrl_c_handler(self, signum, frame):
+		
+		self.PWM_L.stop()
+		self.PWM_R.stop()
+		GPIO.cleanup()
+		
+		
 def main():
 	
-	signal.signal(signal.SIGINT, handler)
+	rospy.init_node('base_controller', anonymous=True)
 	
-	p_l.start(50)
-	p_r.start(50)
-
-	p_l.ChangeDutyCycle(75)
-	p_r.ChangeDutyCycle(75)
-
-	while True:
-		print(".")
-		# time.sleep(.25)
-
+	bc = BaseControllerNode(hw=True)
+	
+	signal.signal(signal.SIGINT, bc.ctrl_c_handler)
+	
+	bc.run()
+	
+	# p_l.ChangeDutyCycle(75)
+	# p_r.ChangeDutyCycle(75)
 	
 if __name__=='__main__':
 	main()
