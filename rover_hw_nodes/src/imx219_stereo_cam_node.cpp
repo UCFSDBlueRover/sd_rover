@@ -5,7 +5,9 @@
 
 #include <ros/ros.h>
 #include <opencv2/opencv.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/Image.h>
 
 int main(int argc, char **argv)
 {
@@ -34,7 +36,7 @@ int main(int argc, char **argv)
     ros::Rate rate(10);
     while (ros::ok())
     {
-        
+	
         ros::spinOnce();
         rate.sleep();
     }
