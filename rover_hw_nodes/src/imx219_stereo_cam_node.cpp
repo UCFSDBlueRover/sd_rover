@@ -4,6 +4,8 @@
 #include <string>
 
 #include <ros/ros.h>
+
+// cameras
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <cv_bridge/cv_bridge.h>
@@ -14,10 +16,11 @@
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "talker");
+    // initialize node
+    ros::init(argc, argv, "imx219_stereo_cam_node");
     ros::NodeHandle n;
 
-    // ImageTransport rather than NodeHandle for better compression, naming conventions, etc.
+    // ImageTransport rather than NodeHandle for better compression, naming conventions, etc for image publishing.
     image_transport::ImageTransport it(n);
 
     // use CvImagePtr to convert OpenCV-format images to ROS messages
@@ -28,9 +31,11 @@ int main(int argc, char **argv)
     image_transport::Publisher im0_pub = it.advertise("/im0", 1);
     image_transport::Publisher im1_pub = it.advertise("/im1", 1);
 
+    // configure our cameras with nvarguscamerasrc pipeline
     cv::VideoCapture cam0("nvarguscamerasrc sensor-id=0 ! video/x-raw(memory:NVMM), width=640, height=480, format=(string)NV12, framerate=(fraction)20/1 ! nvvidconv flip-method=0 ! video/x-raw, width=640, height=480, format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink", cv::CAP_GSTREAMER);
     cv::VideoCapture cam1("nvarguscamerasrc sensor-id=1 ! video/x-raw(memory:NVMM), width=640, height=480, format=(string)NV12, framerate=(fraction)20/1 ! nvvidconv flip-method=0 ! video/x-raw, width=640, height=480, format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink", cv::CAP_GSTREAMER);
 
+    // make sure both cameras opened correctly
     if (!cam0.isOpened())
     {
        printf("cam0 is not opened.\n");
@@ -42,25 +47,34 @@ int main(int argc, char **argv)
        return -1;
     }
 
-    ros::Rate rate(10);
+    // to hold camera frames
+        cv::Mat frame0, frame1;
+    sensor_msgs::ImagePtr msg0, msg1;
+
+    // main loop publishes an image from both cameras every iteration
+    ros::Rate rate(10); // loop freq. in Hz
     while (ros::ok())
     {
-        // std::cout << "got here" << std::endl;
-        cv::Mat frame0, frame1;
-
         // write camera streams to frames
         cam0 >> frame0;
         cam1 >> frame1;
 
-        // cv_ptr1 = cv)_
+        if (!frame0.empty())
+        {
+            msg0 = cv_bridge::CvImage(std_msgs::Header(), "bgr8", frame0).toImageMsg();
+            im0_pub.publish(msg0);
+        }
 
-        // im0_pub.publish(cv_ptr_->toImageMsg());
-        // im1_pub.publish(cv_ptr_->toImageMsg());
+        if (!frame1.empty())
+        {
+            msg1 = cv_bridge::CvImage(std_msgs::Header(), "bgr8", frame1).toImageMsg();
+            im1_pub.publish(msg1);
+        }
 
-        cv::namedWindow("imgLeft", cv::WINDOW_AUTOSIZE);
-        cv::namedWindow("imgRight", cv::WINDOW_AUTOSIZE);
-        cv::imshow("imgLeft", frame0);
-        cv::imshow("imgRight", frame1);
+        // cv::namedWindow("imgLeft", cv::WINDOW_AUTOSIZE);
+        // cv::namedWindow("imgRight", cv::WINDOW_AUTOSIZE);
+        // cv::imshow("imgLeft", frame0);
+        // cv::imshow("imgRight", frame1);
 
         cv::waitKey(1);
 
