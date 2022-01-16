@@ -22,9 +22,13 @@
 #include <stddef.h>
 #include <math.h>
 
-typedef uint8_t bool;
-#define true  1
-#define false 0
+// we can't redefine bool for a CPP program, since it's a standard dtype
+#ifndef __cplusplus
+  typedef uint8_t bool;
+  #define true  1
+  #define false 0
+#endif
+
 
 /* define Sensitivity Scale Factor*/
 #define GYRO_SSF_AT_FS_250DPS  (131)   /* LSB/dps */
