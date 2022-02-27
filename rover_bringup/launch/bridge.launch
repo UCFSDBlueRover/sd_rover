@@ -1,0 +1,10 @@
+<launch>
+
+    <!-- initialize the Pico bridge for serial communication between SBC and Pico-->
+    <node pkg="rover_hw_nodes" type="pico_bridge.py" name="pico_bridge" />
+
+    <!-- listen to GPS output of pico_bridge and publish NavSatFix messages -->
+    <node pkg="nmea_navsat_driver" type="nmea_topic_driver" name="gps_topic_listener">
+    </node>
+
+</launch>
