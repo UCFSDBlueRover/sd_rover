@@ -1,0 +1,5 @@
+<launch>
+
+    <node name="cam_pub" pkg="rover_hw_nodes" type="imx219_stereo_cam_node" output="screen"/>
+
+</launch>
