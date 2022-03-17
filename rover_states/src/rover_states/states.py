@@ -164,9 +164,10 @@ class Standby(smach.State):
         ''' TODO: check for override flag in RC message, throw rc_preempt '''
 
         # assumes that pose_target field of Command msg is empty if we don't want waypoint navigation
-        if data.pose_target is not None:
-            self._pose_target = data.pose_target
-            self._pose_preempt = True
+        if data.pose_preempt is not None:
+            if data.pose_preempt.data:
+                self._pose_target = data.target
+                self._pose_preempt = True
 
         if data.rc_preempt is not None:
             if data.rc_preempt.data:
