@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 
 # ROS system imports
+from xml.dom.minidom import Attr
 import rospy
 import actionlib
 import smach, smach_ros
 
-from enum import Enum
+from rospy_message_converter import json_message_converter
 
 # ROS messages
 import std_msgs.msg as std
 import nav_msgs.msg as nav
+import sensor_msgs.msg as sensor
 import geometry_msgs.msg as geom
 import rover_msg.msg as rov
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
@@ -192,9 +194,8 @@ class Waypoint(smach.State):
         # create the client that will connect to move_base
         self.client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
         
-        # listen for pose updates that will change our pose_target
-        pose_sub = rospy.Subscriber('/pose_updates', geom.PoseStamped, callback=self.pose_callback)
-        self.pose_update = False
+        
+        self.pose_update = False    # flag is TRUE when a pose update is received (a pose different from the one we were previously given is received)
 
         # the pose target that WAYPOINT will use for navigation
         self._pose_target = None
@@ -203,13 +204,18 @@ class Waypoint(smach.State):
 
         ''' manages the lifecycle of calls to the autonomy stack '''
 
+        # listen for pose updates that will change our pose_target
+        pose_sub = rospy.Subscriber('/pose_updates', geom.Point, callback=self.pose_callback)
+
         # get input pose target (pose that caused us to transition to Waypoint)
-        self._pose_target = userdata.pose_target
+        # needs to be converted from JSON to ROS message
+        self._pose_target = json_message_converter.convert_json_to_ros_message('geometry_msgs/Point', userdata.pose_target)
         self._pose_update = True
 
         # make sure we have connection to client server before continuing
         self.client.wait_for_server()
 
+        rate = rospy.Rate(20)
         while not rospy.is_shutdown():
 
             # will need to use an actionlib connection to move_base, like below:
@@ -243,6 +249,8 @@ class Waypoint(smach.State):
                 # reset the flag
                 self._pose_update = False
 
+            rate.sleep()
+
     def pose_callback(self, data):
         # update internal pose target
         self._pose_target = data.pose
@@ -252,26 +260,51 @@ class Waypoint(smach.State):
 class Manual(smach.State):
 
     def __init__(self):
-        smach.State.__init__(self, outcomes=['rc_un_preempt', 'resume_waypoint', 'error'])
+        smach.State.__init__(self, outcomes=['resume_standby', 'resume_waypoint', 'error'])
+        # TODO: add input_key prev_state
 
-        # subscribe to RC commands
-        # TODO: make/find an RC channels message
-        rospy.Subscriber('/rc', std.String, callback=self.rc_callback)
+        # flags
+        self._rc_un_preempt = False # if true, we return to previous state
 
         # publish motor commands for the base_controller to actuate
         self.motor_pub = rospy.Publisher('/cmd_vel', geom.Twist, queue_size=10)
-    
+
+        # subscribe to commands
+        rospy.Subscriber('/command', rov.Cmd, callback=self.cmd_callback)
+
     def execute(self, userdata):
 
+        rate = rospy.Rate(20)
+
         while not rospy.is_shutdown():
-            pass
+        
+            if self._rc_un_preempt:
+                return 'rc_un_preempt'
 
-    def rc_callback(self, data):
+            rate.sleep()
 
-        # convert raw RC to twist (if that's the approach we're taking)
+    def cmd_callback(self, data):
 
-        # publish on cmd_vel with self.motor_pub
-        pass
+        if data.rc_preempt is not None:
+
+            # if our RC preempt is active, pass motor commands to base_controller via /cmd_vel
+            if data.rc_preempt.data:
+                self.motor_pub.publish(data.motors)
+            elif not data.rc_preempt.data:
+
+                # zero out a Twist message to stop motors
+                twist = geom.Twist()
+                twist.linear.x = 0
+                twist.linear.y = 0
+                twist.linear.z = 0
+                twist.angular.x = 0
+                twist.angular.y = 0
+                twist.angular.z = 0
+
+                self.motor_pub.publish(twist)
+
+                # set rc_un_preempt to true to return to previous state
+                self._rc_un_preempt = True
 
 class Warn(smach.State):
 
@@ -303,7 +336,7 @@ class End(smach.State):
 def main():
 
     # initialize ROS node
-    rospy.init_node('rover_sm', anonymous=True)
+    rospy.init_node('rover_sm', anonymous=True, log_level=rospy.DEBUG)
 
     # TODO: publisher for Telemetry message
 
@@ -311,7 +344,9 @@ def main():
     sm = smach.StateMachine(outcomes=['success', 'err'])
 
     # declare userdata
-    sm.userdata.pose_target = geom.PoseStamped()
+    sm.userdata.pose_target = ""
+    sm.userdata.end_status = ""
+    sm.userdata.end_reason = ""
 
     # define states within sm
     with sm:
@@ -329,7 +364,7 @@ def main():
             remapping={'pose_target':'pose_target', 'status':'waypoint_status'})
         smach.StateMachine.add('MANUAL',
             Manual(),
-            transitions={'rc_un_preempt':'STANDBY', 'resume_waypoint':'WAYPOINT', 'error':'WARN'},
+            transitions={'resume_standby':'STANDBY', 'resume_waypoint':'WAYPOINT', 'error':'WARN'},
             remapping={})
         smach.StateMachine.add('WARN',
             Warn(),
