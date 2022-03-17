@@ -125,6 +125,11 @@ class Standby(smach.State):
 
     def execute(self, userdata):
 
+        rate = rospy.Rate(20)
+
+        # wait until execute to initialize subscribers so that multiple states can listen to same topic names without clashing
+        rospy.Subscriber('/cmd', rov.Cmd, callback=self.cmd_callback)
+
         while not rospy.is_shutdown():
 
             # if we received motor commands, 
