@@ -7,9 +7,9 @@ import rospy
 from rospy_message_converter import json_message_converter
 # python imports
 import serial
-import rospy_message_converter
 
 import std_msgs.msg as std
+import geometry_msgs.msg as geom
 import nmea_msgs.msg as nmea
 import rover_msg.msg as rov
 
@@ -58,6 +58,13 @@ def loopback_cmd_cb(command: rov.Cmd, ser: serial.Serial) -> None:
     encoded = cmd_string.encode('utf-8')
     ser.write(encoded)
 
+def motor_cb(twist: geom.Twist, ser: serial.Serial) -> None:
+
+    ''' on receive Twist messages for the motors, convert to PWM duty cycles and pass to Pico '''
+
+
+
+
 def main():
 
     rospy.init_node('pico_bridge', anonymous=True)
@@ -75,6 +82,7 @@ def main():
     )
 
     cmd_sub = rospy.Subscriber('/loopback_cmd', rov.Cmd, callback=loopback_cmd_cb, callback_args=(ser))
+    motor_sub = rospy.Subscriber('/cmd_vel', geom.Twist, callback=motor_cb, callback_args=(ser))
 
     if not ser.is_open:
         rospy.logerr("Couldn't open serial port")
