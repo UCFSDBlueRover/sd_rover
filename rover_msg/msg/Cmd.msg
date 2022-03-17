@@ -5,3 +5,4 @@ std_msgs/Bool start         # if true, Rover exits BOOT state (if all is well)
 std_msgs/Bool cancel        # if true, cancels current actions
 std_msgs/Bool shutdown      # if true, stop robot execution
 std_msgs/Bool rc_preempt    # if true, preempts current actions with motor commands
+std_msgs/Bool pose_preempt  # if true, preempts current actions with waypoint target
