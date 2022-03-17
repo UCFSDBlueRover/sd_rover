@@ -119,9 +119,8 @@ class Standby(smach.State):
         self._pose_preempt = False
         self._end = False
 
-        self._pose_target = geom.PoseStamped()
-
-        cmd_sub = rospy.Subscriber('/command', rov.Cmd, callback=self.cmd_callback)
+        # _pose_target is filled when we receive a pose target from Cmd
+        self._pose_target = None
 
     def execute(self, userdata):
 
@@ -133,12 +132,14 @@ class Standby(smach.State):
         while not rospy.is_shutdown():
 
             # if we received motor commands, 
-            if self.rc_preempt:
+            if self._rc_preempt:
                 rospy.logdebug("Standby preempted by RC command.")
                 return 'rc_preempt'
             # if we received a pose in Command msg, pass that as output of state
-            if self.pose_preempt:
-                userdata.pose_target = self._pose_target
+            if self._pose_preempt:
+                # userdata cannot hold arbitrary objects like ROS messages
+                # so, convert ROS message to json (string), then convert again at destination
+                userdata.pose_target = json_message_converter.convert_ros_message_to_json(self._pose_target)
                 rospy.logdebug("Standby preempted by pose target.")
                 return 'got_pose'
 
@@ -154,6 +155,8 @@ class Standby(smach.State):
                 userdata.end_reason = 'User initiated end state.'
                 userdata.end_status = 'success'
                 return 'end'
+            
+            rate.sleep()
 
 
     def cmd_callback(self, data):
