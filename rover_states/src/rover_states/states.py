@@ -22,9 +22,24 @@ class Boot(smach.State):
         # TODO: define message callbacks for topics to watch and throw flags
         # what needs to be verified before we can begin?
 
+        self.config = self.read_params() # TODO
+
         # RX HEARTBEAT
         rospy.Subscriber('/heartbeat', rov.Heartbeat, callback=self.hb_callback)
+        # INIT message from GS
+        rospy.Subscriber('/cmd', rov.Cmd, callback=self.cmd_callback)
+        # GPS data 
+        rospy.Subscriber('/fix', sensor.NavSatFix, callback=self.GPS_callback)
+        # IMU data
+        rospy.Subscriber('/imu', sensor.Imu, callback=self.IMU_callback)
+        # Camera data
+        # 
+        # odom?
+
         self._hb_flag = False
+        self._cmd_flag = False
+        self._gps_flag = False
+        self._imu_flag = False
 
         # RX data from all sensor stream topics
 
@@ -32,16 +47,66 @@ class Boot(smach.State):
 
     def execute(self, userdata):
 
+        rate = rospy.Rate(20)
+
+        # configure timer to output status of subscribers every 5 secs
+        status_timer = rospy.Timer(rospy.Duration(5), self.timer_status_callback)
+
+        # configure timeout for switching to WARN state
+        # TODO
+
         while not rospy.is_shutdown():
 
-            if self._hb_flag:
+            if self._hb_flag and self._cmd_flag and self._gps_flag and self._imu_flag:
+                rospy.logdebug("All sources up. Transitioning to STANDBY.")
+                # end the status timer
+                status_timer.shutdown()
+
                 return 'boot_success'
 
             # what constitutes an error?
+            rate.sleep()
 
-    def hb_callback(self, data):
+    def timer_status_callback(self, event):
 
-        self._hb_flag = True
+        rospy.logdebug(
+            "\nHEARTBEAT: \t{}\n".format(self._hb_flag) + \
+            "CMD: \t\t{}\n".format(self._cmd_flag) + \
+            "GPS: \t\t{}\n".format(self._gps_flag) + \
+            "IMU: \t\t{}\n".format(self._imu_flag)
+        )
+
+    def hb_callback(self, msg):
+
+        # make sure it's a valid message
+        if msg.time is not None:
+            self._hb_flag = True
+
+    def cmd_callback(self, msg):
+
+        try:
+            if msg.start.data is True:
+                self._cmd_flag = True
+        except AttributeError as e:
+            pass
+    
+    def GPS_callback(self, msg):
+
+        try:
+            if msg.status.status != -1:
+                self._gps_flag = True
+        except AttributeError as e:
+            pass
+
+    def IMU_callback(self, msg):
+
+        if msg.header is not None:
+            self._imu_flag = True
+
+    # TODO
+    def read_params(self):
+        ''' Reads parameters from loaded config file to set up this states topic subscribers/publishers, etc. '''
+        pass
 
 class Standby(smach.State):
 
