@@ -32,16 +32,16 @@ def on_press(key):
 
     # modify twist message depending on which arrow key pressed    
     if( k == 'left' ):
-        twist.angular.z = -.4
+        twist.angular.z = -.15
         change_flag = True
     if( k == 'right' ):
-        twist.angular.z = .4
+        twist.angular.z = .15
         change_flag = True
     if( k == 'up' ):
-        twist.linear.x = .2
+        twist.linear.x = .1
         change_flag = True
     if( k == 'down' ):
-        twist.linear.x = -.2
+        twist.linear.x = -.1
         change_flag = True      
 
     # update published twist message
