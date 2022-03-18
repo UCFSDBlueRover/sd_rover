@@ -194,14 +194,14 @@
 
             <!-- tf -->
             <publishTf>true</publishTf> <!-- publish the transforms -->
-            <publishOdomTF>true</publishOdomTF>
-            <publishWheelTF>false</publishWheelTF>
+            <publishOdomTF>false</publishOdomTF>
+            <publishWheelTF>true</publishWheelTF>
             <odometryFrame>odom</odometryFrame>
             <robotBaseFrame>base_link</robotBaseFrame>
 
             <!-- ros messaging -->
             <commandTopic>/cmd_vel</commandTopic> <!-- listens to -->
-            <odometryTopic>odom</odometryTopic> <!-- publishes on -->
+            <odometryTopic>/odom</odometryTopic> <!-- publishes on -->
 
             <!-- Set to true to swap right and left wheels, defaults to true -->
             <legacyMode>true</legacyMode>
@@ -280,6 +280,7 @@
             <gaussianNoise>0.1 0.1 0.1</gaussianNoise>
             <velocityDrift>0 0 0</velocityDrift>
             <velocityGaussianNoise>0.1 0.1 0.1</velocityGaussianNoise>
+            <frameId>map</frameId>
 
             <!-- references -->
             <!-- <referenceLatitude></referenceLatitude>
