@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 # ROS system imports
-from xml.dom.minidom import Attr
 import rospy
 import actionlib
 import smach, smach_ros
