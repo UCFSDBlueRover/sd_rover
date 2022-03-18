@@ -20,8 +20,8 @@ obstacles_3d:
   mark_threshold:         0      # voxel height
   combination_method:     1      # 1=max, 0=override
   track_unknown_space:    true   # default space is unknown
-  obstacle_range:         3.0    # meters
-  raytrace_range:         3.5
+  obstacle_range:         5.0    # meters
+  raytrace_range:         5.0
   publish_voxel_map:      true
   observation_sources:   depth_camera
   depth_camera:
@@ -30,20 +30,10 @@ obstacles_3d:
     sensor_frame: "camera_depth_link"
     marking: true
     clearing: true
-    obstacle_range: 20.0 # from model.sdf parameters
-    raytrace_range: 20.0
+    obstacle_range: 5.0 # from model.sdf parameters
+    raytrace_range: 5.0
     max_obstacle_height: 2.0
     min_obstacle_height: 0.0
-  # velodyne:
-  #   data_type: PointCloud2
-  #   topic: /velodyne
-  #   sensor_frame: bowser2/lidar_link
-  #   marking: true
-  #   clearing: true
-  #   obstacle_range: 130.0 # from model.sdf parameters
-  #   raytrace_range: 130.0
-  #   max_obstacle_height: 2.0
-  #   min_obstacle_height: 0.0
 
 # obstacles_2d:
 #   enabled:                true
