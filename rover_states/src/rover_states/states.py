@@ -194,68 +194,82 @@ class Waypoint(smach.State):
         # create the client that will connect to move_base
         self.client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
         
-        
-        self.pose_update = False    # flag is TRUE when a pose update is received (a pose different from the one we were previously given is received)
+        self._target_update = False    # flag is TRUE when a pose update is received (a pose different from the one we were previously given is received)
+        self._rc_preempt = False
 
         # the pose target that WAYPOINT will use for navigation
         self._pose_target = None
+        self.goal = None
 
     def execute(self, userdata):
 
         ''' manages the lifecycle of calls to the autonomy stack '''
 
-        # listen for pose updates that will change our pose_target
-        pose_sub = rospy.Subscriber('/pose_updates', geom.Point, callback=self.pose_callback)
+        # listen for command updates that (might) change our pose_target
+        cmd_sub = rospy.Subscriber('/cmd', rov.Cmd, callback=self.cmd_callback)
 
         # get input pose target (pose that caused us to transition to Waypoint)
         # needs to be converted from JSON to ROS message
         self._pose_target = json_message_converter.convert_json_to_ros_message('geometry_msgs/Point', userdata.pose_target)
-        self._pose_update = True
 
-        # make sure we have connection to client server before continuing
-        self.client.wait_for_server()
+        # make sure we have connection to client server before continuing, timeout after 10s
+        self.client.wait_for_server(timeout=rospy.Duration(10))
+        
+        # send the initial goal based on the pose target that brought us to this state
+        self.goal = MoveBaseGoal()
+        self.goal.target_pose.header.frame_id = "map"   # MUST be in map frame
+        self.goal.target_pose.header.stamp = rospy.Time.now()
+
+        # read our pose_target from userdata
+        self.goal.target_pose.pose.position = self._pose_target
+        # use arbitrary orientation (we don't care right now)
+        self.goal.target_pose.pose.orientation.x = 0
+        self.goal.target_pose.pose.orientation.y = 0
+        self.goal.target_pose.pose.orientation.z = 0
+        self.goal.target_pose.pose.orientation.w = 1
+
+        self.client.send_goal(self.goal)
 
         rate = rospy.Rate(20)
         while not rospy.is_shutdown():
 
-            # will need to use an actionlib connection to move_base, like below:
-            # https://hotblackrobotics.github.io/en/blog/2018/01/29/action-client-py/
-            # this approach may require multithreading to not block the main loop
+            if self._rc_preempt:
+                self._rc_preempt = False
+                rospy.logdebug("Preempted by RC.")
+                return 'rc_preempt'
 
-            # for a non-blocking method: https://answers.ros.org/question/347823/action-client-wait_for_result-in-python/
-            # 1. send goal with send_goal()
-            # 2. query action server for state with getState()
-            # 3. if we're in the appropriate state, getResult()
-            # api docs: http://docs.ros.org/melodic/api/actionlib/html/classactionlib_1_1simple__action__client_1_1SimpleActionClient.html
+            if self._target_update:
+                rospy.logdebug("Updating goal to \n\t{}".format(self.goal.serialize))
+                self.client.send_goal(self.goal)
+                self._target_update = False
 
-            # if we received a pose update, create a new goal
-            if self._pose_update:
-                
-                # goal = MoveBaseGoal()
-
-                # goal.target_pose.header.frame_id = "map"
-                # goal.target_pose.header.stamp = rospy.Time.now()
-                # goal.target_pose.pose.position.x = 0.5
-                # goal.target_pose.pose.orientation.w = 1.0
-
-                # client.send_goal(goal)
-                # wait = client.wait_for_result()
-                # if not wait:
-                #     rospy.logerr("Action server not available!")
-                #     rospy.signal_shutdown("Action server not available!")
-                # else:
-                #     return client.get_result()
-
-                # reset the flag
-                self._pose_update = False
+            current_state = self.client.get_state()
+            if current_state == actionlib.GoalStatus.SUCCEEDED:
+                rospy.loginfo("Goal Succeeded.\n {}".format(self.client.get_goal_status_text()))
+                return 'nav_finish'
+            elif current_state == actionlib.GoalStatus.REJECTED or \
+                 current_state == actionlib.GoalStatus.ABORTED:
+                rospy.logerr("Goal returned an error:\n\t {}".format(self.client.get_goal_status_text))
+                return 'error'
+            elif current_state == actionlib.GoalStatus.LOST:
+                rospy.logerr("Goal state returned LOST. Are we sure we sent a goal?")
 
             rate.sleep()
 
-    def pose_callback(self, data):
-        # update internal pose target
-        self._pose_target = data.pose
-        # set flag to true
-        self._pose_update = True
+    def cmd_callback(self, msg):
+
+        if msg.target is not None and self.goal is not None:
+            # if we received a target goal that doesn't match what we already have
+            if msg.target != self.goal.target_pose.pose.position:
+                # cancel all goals
+                self.client.cancel_all_goals()
+                # set our goal to the new target
+                self.goal.target_pose.pose.position = msg.target
+                # set the flag to notify our main loop
+                self._target_update = True
+        
+        if msg.rc_preempt:
+            self._rc_preempt = True
     
 class Manual(smach.State):
 
