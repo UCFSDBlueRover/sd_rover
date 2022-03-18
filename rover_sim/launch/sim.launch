@@ -9,6 +9,7 @@
     <arg name="rviz" default="true"/>   <!-- use rviz window for robot information -->
     <arg name="rviz_cfg" default="$(find rover_sim)/rviz/rover_v1.rviz" />
     <arg name="sim_heartbeat" default="true"/>
+    <arg name="nav" default="true" />
 
     <!-- launching gazebo_ros, which is just gazebo with ros integrated -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
@@ -41,12 +42,9 @@
 
     <node if="$(arg sim_heartbeat)" name="heartbeat_pub" pkg="rover_sim" type="heartbeat.py" />
 
-    <node pkg="move_base" type="move_base" name="move_base" output="screen">
-        <rosparam file="$(find rover_nav)/config/move_base/costmap_common_params.yaml" command="load" ns="global_costmap" /> 
-        <rosparam file="$(find rover_nav)/config/move_base/costmap_common_params.yaml" command="load" ns="local_costmap" />
-        <rosparam file="$(find rover_nav)/config/move_base/local_costmap_params.yaml" command="load" />
-        <rosparam file="$(find rover_nav)/config/move_base/global_costmap_params.yaml" command="load" /> 
-        <rosparam file="$(find rover_nav)/config/move_base/base_local_planner_params.yaml" command="load" />
-    </node>
+    <include if="$(arg nav)" file="$(find rover_nav)/launch/nav.launch">
+
+    </include>
+
 
 </launch>
