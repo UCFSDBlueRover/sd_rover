@@ -1,3 +1,9 @@
 [submodule "rospy_message_converter"]
 	path = rospy_message_converter
 	url = https://github.com/uos/rospy_message_converter.git
+[submodule "sd_rover_pico"]
+	path = sd_rover_pico
+	url = https://github.com/wesfletch/sd_rover_pico.git
+[submodule "nmea_navsat_driver"]
+	path = nmea_navsat_driver
+	url = https://github.com/ros-drivers/nmea_navsat_driver.git

@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 
 # ROS system imports
+from xml.dom.minidom import Attr
 import rospy
 import actionlib
 import smach, smach_ros
 
-from enum import Enum
+from rospy_message_converter import json_message_converter
 
 # ROS messages
 import std_msgs.msg as std
 import nav_msgs.msg as nav
+import sensor_msgs.msg as sensor
 import geometry_msgs.msg as geom
 import rover_msg.msg as rov
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
@@ -22,9 +24,24 @@ class Boot(smach.State):
         # TODO: define message callbacks for topics to watch and throw flags
         # what needs to be verified before we can begin?
 
+        self.config = self.read_params() # TODO
+
         # RX HEARTBEAT
         rospy.Subscriber('/heartbeat', rov.Heartbeat, callback=self.hb_callback)
+        # INIT message from GS
+        rospy.Subscriber('/cmd', rov.Cmd, callback=self.cmd_callback)
+        # GPS data 
+        rospy.Subscriber('/fix', sensor.NavSatFix, callback=self.GPS_callback)
+        # IMU data
+        rospy.Subscriber('/imu', sensor.Imu, callback=self.IMU_callback)
+        # Camera data
+        # 
+        # odom?
+
         self._hb_flag = False
+        self._cmd_flag = False
+        self._gps_flag = False
+        self._imu_flag = False
 
         # RX data from all sensor stream topics
 
@@ -32,16 +49,66 @@ class Boot(smach.State):
 
     def execute(self, userdata):
 
+        rate = rospy.Rate(20)
+
+        # configure timer to output status of subscribers every 5 secs
+        status_timer = rospy.Timer(rospy.Duration(5), self.timer_status_callback)
+
+        # configure timeout for switching to WARN state
+        # TODO
+
         while not rospy.is_shutdown():
 
-            if self._hb_flag:
+            if self._hb_flag and self._cmd_flag and self._gps_flag and self._imu_flag:
+                rospy.logdebug("All sources up. Transitioning to STANDBY.")
+                # end the status timer
+                status_timer.shutdown()
+
                 return 'boot_success'
 
             # what constitutes an error?
+            rate.sleep()
 
-    def hb_callback(self, data):
+    def timer_status_callback(self, event):
 
-        self._hb_flag = True
+        rospy.logdebug(
+            "\nHEARTBEAT: \t{}\n".format(self._hb_flag) + \
+            "CMD: \t\t{}\n".format(self._cmd_flag) + \
+            "GPS: \t\t{}\n".format(self._gps_flag) + \
+            "IMU: \t\t{}\n".format(self._imu_flag)
+        )
+
+    def hb_callback(self, msg):
+
+        # make sure it's a valid message
+        if msg.time is not None:
+            self._hb_flag = True
+
+    def cmd_callback(self, msg):
+
+        try:
+            if msg.start.data is True:
+                self._cmd_flag = True
+        except AttributeError as e:
+            pass
+    
+    def GPS_callback(self, msg):
+
+        try:
+            if msg.status.status != -1:
+                self._gps_flag = True
+        except AttributeError as e:
+            pass
+
+    def IMU_callback(self, msg):
+
+        if msg.header is not None:
+            self._imu_flag = True
+
+    # TODO
+    def read_params(self):
+        ''' Reads parameters from loaded config file to set up this states topic subscribers/publishers, etc. '''
+        pass
 
 class Standby(smach.State):
 
@@ -54,21 +121,27 @@ class Standby(smach.State):
         self._pose_preempt = False
         self._end = False
 
-        self._pose_target = geom.PoseStamped()
-
-        cmd_sub = rospy.Subscriber('/command', rov.Cmd, callback=self.cmd_callback)
+        # _pose_target is filled when we receive a pose target from Cmd
+        self._pose_target = None
 
     def execute(self, userdata):
+
+        rate = rospy.Rate(20)
+
+        # wait until execute to initialize subscribers so that multiple states can listen to same topic names without clashing
+        rospy.Subscriber('/cmd', rov.Cmd, callback=self.cmd_callback)
 
         while not rospy.is_shutdown():
 
             # if we received motor commands, 
-            if self.rc_preempt:
+            if self._rc_preempt:
                 rospy.logdebug("Standby preempted by RC command.")
                 return 'rc_preempt'
             # if we received a pose in Command msg, pass that as output of state
-            if self.pose_preempt:
-                userdata.pose_target = self._pose_target
+            if self._pose_preempt:
+                # userdata cannot hold arbitrary objects like ROS messages
+                # so, convert ROS message to json (string), then convert again at destination
+                userdata.pose_target = json_message_converter.convert_ros_message_to_json(self._pose_target)
                 rospy.logdebug("Standby preempted by pose target.")
                 return 'got_pose'
 
@@ -84,6 +157,8 @@ class Standby(smach.State):
                 userdata.end_reason = 'User initiated end state.'
                 userdata.end_status = 'success'
                 return 'end'
+            
+            rate.sleep()
 
 
     def cmd_callback(self, data):
@@ -91,9 +166,10 @@ class Standby(smach.State):
         ''' TODO: check for override flag in RC message, throw rc_preempt '''
 
         # assumes that pose_target field of Command msg is empty if we don't want waypoint navigation
-        if data.pose_target is not None:
-            self._pose_target = data.pose_target
-            self._pose_preempt = True
+        if data.pose_preempt is not None:
+            if data.pose_preempt.data:
+                self._pose_target = data.target
+                self._pose_preempt = True
 
         if data.rc_preempt is not None:
             if data.rc_preempt.data:
@@ -118,9 +194,8 @@ class Waypoint(smach.State):
         # create the client that will connect to move_base
         self.client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
         
-        # listen for pose updates that will change our pose_target
-        pose_sub = rospy.Subscriber('/pose_updates', geom.PoseStamped, callback=self.pose_callback)
-        self.pose_update = False
+        
+        self.pose_update = False    # flag is TRUE when a pose update is received (a pose different from the one we were previously given is received)
 
         # the pose target that WAYPOINT will use for navigation
         self._pose_target = None
@@ -129,13 +204,18 @@ class Waypoint(smach.State):
 
         ''' manages the lifecycle of calls to the autonomy stack '''
 
+        # listen for pose updates that will change our pose_target
+        pose_sub = rospy.Subscriber('/pose_updates', geom.Point, callback=self.pose_callback)
+
         # get input pose target (pose that caused us to transition to Waypoint)
-        self._pose_target = userdata.pose_target
+        # needs to be converted from JSON to ROS message
+        self._pose_target = json_message_converter.convert_json_to_ros_message('geometry_msgs/Point', userdata.pose_target)
         self._pose_update = True
 
         # make sure we have connection to client server before continuing
         self.client.wait_for_server()
 
+        rate = rospy.Rate(20)
         while not rospy.is_shutdown():
 
             # will need to use an actionlib connection to move_base, like below:
@@ -169,6 +249,8 @@ class Waypoint(smach.State):
                 # reset the flag
                 self._pose_update = False
 
+            rate.sleep()
+
     def pose_callback(self, data):
         # update internal pose target
         self._pose_target = data.pose
@@ -178,26 +260,51 @@ class Waypoint(smach.State):
 class Manual(smach.State):
 
     def __init__(self):
-        smach.State.__init__(self, outcomes=['rc_un_preempt', 'resume_waypoint', 'error'])
+        smach.State.__init__(self, outcomes=['resume_standby', 'resume_waypoint', 'error'])
+        # TODO: add input_key prev_state
 
-        # subscribe to RC commands
-        # TODO: make/find an RC channels message
-        rospy.Subscriber('/rc', std.String, callback=self.rc_callback)
+        # flags
+        self._rc_un_preempt = False # if true, we return to previous state
 
         # publish motor commands for the base_controller to actuate
         self.motor_pub = rospy.Publisher('/cmd_vel', geom.Twist, queue_size=10)
-    
+
+        # subscribe to commands
+        rospy.Subscriber('/command', rov.Cmd, callback=self.cmd_callback)
+
     def execute(self, userdata):
 
+        rate = rospy.Rate(20)
+
         while not rospy.is_shutdown():
-            pass
+        
+            if self._rc_un_preempt:
+                return 'rc_un_preempt'
 
-    def rc_callback(self, data):
+            rate.sleep()
 
-        # convert raw RC to twist (if that's the approach we're taking)
+    def cmd_callback(self, data):
 
-        # publish on cmd_vel with self.motor_pub
-        pass
+        if data.rc_preempt is not None:
+
+            # if our RC preempt is active, pass motor commands to base_controller via /cmd_vel
+            if data.rc_preempt.data:
+                self.motor_pub.publish(data.motors)
+            elif not data.rc_preempt.data:
+
+                # zero out a Twist message to stop motors
+                twist = geom.Twist()
+                twist.linear.x = 0
+                twist.linear.y = 0
+                twist.linear.z = 0
+                twist.angular.x = 0
+                twist.angular.y = 0
+                twist.angular.z = 0
+
+                self.motor_pub.publish(twist)
+
+                # set rc_un_preempt to true to return to previous state
+                self._rc_un_preempt = True
 
 class Warn(smach.State):
 
@@ -229,7 +336,7 @@ class End(smach.State):
 def main():
 
     # initialize ROS node
-    rospy.init_node('rover_sm', anonymous=True)
+    rospy.init_node('rover_sm', anonymous=True, log_level=rospy.DEBUG)
 
     # TODO: publisher for Telemetry message
 
@@ -237,7 +344,9 @@ def main():
     sm = smach.StateMachine(outcomes=['success', 'err'])
 
     # declare userdata
-    sm.userdata.pose_target = geom.PoseStamped()
+    sm.userdata.pose_target = ""
+    sm.userdata.end_status = ""
+    sm.userdata.end_reason = ""
 
     # define states within sm
     with sm:
@@ -255,7 +364,7 @@ def main():
             remapping={'pose_target':'pose_target', 'status':'waypoint_status'})
         smach.StateMachine.add('MANUAL',
             Manual(),
-            transitions={'rc_un_preempt':'STANDBY', 'resume_waypoint':'WAYPOINT', 'error':'WARN'},
+            transitions={'resume_standby':'STANDBY', 'resume_waypoint':'WAYPOINT', 'error':'WARN'},
             remapping={})
         smach.StateMachine.add('WARN',
             Warn(),

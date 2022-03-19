@@ -2,7 +2,7 @@
     <param name="/use_sim_time" value="true" />
 
     <!-- configuring CLI arguments -->
-    <arg name="robot" default="rover_v2"/>
+    <arg name="robot" default="rover_v3"/>
     <arg name="world" default="empty"/>
     <arg name="robot_desc" default="$(find rover_sim)/models/$(arg robot)/model.urdf" />
     <arg name="gazebo" default="false" />   <!-- launch the full Gazebo gui window (resource intensive)-->
@@ -20,7 +20,6 @@
         <arg name="debug" value="false"/>
         <arg name="verbose" value="true"/>
     </include>
-
 
     <!-- load robot description to parameter server (for robot_state_publisher) -->
     <param name="robot_description" textfile="$(arg robot_desc)" />
@@ -41,5 +40,13 @@
     <node if="$(arg rviz)" name="rviz" pkg="rviz" type="rviz" args="-d $(arg rviz_cfg)"/>
 
     <node if="$(arg sim_heartbeat)" name="heartbeat_pub" pkg="rover_sim" type="heartbeat.py" />
+
+    <node pkg="move_base" type="move_base" name="move_base" output="screen">
+        <rosparam file="$(find rover_nav)/config/move_base/costmap_common_params.yaml" command="load" ns="global_costmap" /> 
+        <rosparam file="$(find rover_nav)/config/move_base/costmap_common_params.yaml" command="load" ns="local_costmap" />
+        <rosparam file="$(find rover_nav)/config/move_base/local_costmap_params.yaml" command="load" />
+        <rosparam file="$(find rover_nav)/config/move_base/global_costmap_params.yaml" command="load" /> 
+        <rosparam file="$(find rover_nav)/config/move_base/base_local_planner_params.yaml" command="load" />
+    </node>
 
 </launch>
