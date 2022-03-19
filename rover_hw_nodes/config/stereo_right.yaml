@@ -1,0 +1,28 @@
+# https://github.com/borongyuan/jetson_csi_stereo_ros/blob/master/cfg/right.yaml
+
+image_width: 1280
+image_height: 720
+camera_name: stereo
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [ 1147.63453,     0.     ,   614.53615,
+             0.     ,  1146.85705,   364.08267,
+             0.     ,     0.     ,     1.     ]
+camera_model: plumb_bob
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [-0.071009, 0.144251, 0.000486, -0.001085, 0.000000]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [ 0.99981586, -0.00323886, -0.01891434,
+          0.00328465,  0.99999175,  0.00239046,
+          0.01890644, -0.00245215,  0.99981825]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [ 1184.20604,     0.     ,   663.99054,   -71.30548,
+             0.     ,  1184.20604,   368.61502,     0.     ,
+             0.     ,     0.     ,     1.     ,     0.     ]
