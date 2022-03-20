@@ -24,16 +24,28 @@
 
     <rosparam command="load" file="$(find rover_nav)/config/robot_localization/dual_ekf_navsat.yaml" />
 
+    <!-- (1)
+         INPUT:     /odom and /imu topics
+         OUTPUT:    odom->base_link transform
+    -->
     <node pkg="robot_localization" type="ekf_localization_node" name="ekf_se_odom" clear_params="true"/>
 
-    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_se_map" clear_params="true">
+    <!-- (2)
+         INPUT:     /odom, /imu, and GPS odometry from (3)
+         OUTPUT:    odom->base_link transform (augmented with GPS)
+    -->
+    <!-- <node pkg="robot_localization" type="ekf_localization_node" name="ekf_se_map" clear_params="true">
         <remap from="odometry/filtered" to="odometry/filtered_map"/>
-    </node>
+    </node> -->
 
-    <node pkg="robot_localization" type="navsat_transform_node" name="navsat_transform" clear_params="true">
+    <!-- (3)
+         INPUT:     /fix, /odometry
+         OUTPUT: 
+    -->
+    <!-- <node pkg="robot_localization" type="navsat_transform_node" name="navsat_transform" clear_params="true">
         <remap from="odometry/filtered" to="odometry/filtered_map"/>
         <remap from="imu/data" to="imu" />
         <remap from="gps/fix" to="fix" />
-    </node>
+    </node> -->
 
 </launch>
