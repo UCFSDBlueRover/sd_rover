@@ -216,7 +216,7 @@ class Waypoint(smach.State):
         
         # send the initial goal based on the pose target that brought us to this state
         self.goal = MoveBaseGoal()
-        self.goal.target_pose.header.frame_id = "map"   # MUST be in map frame
+        self.goal.target_pose.header.frame_id = "odom"   # MUST be in odom frame
         self.goal.target_pose.header.stamp = rospy.Time.now()
 
         # read our pose_target from userdata

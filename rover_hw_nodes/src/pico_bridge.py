@@ -44,6 +44,28 @@ def str_to_sentence(input: str) -> nmea.Sentence:
     
     return sentence
 
+def str_to_command(input: list) -> rov.Cmd:
+
+    cmd = rov.Cmd()
+
+    cmd.target = geom.Point()
+    try:
+        cmd.target.x = float(input[0])
+        cmd.target.y = float(input[1])
+        cmd.target.z = float(input[2])
+    except ValueError as e:
+        rospy.logerr(e)
+        return None
+
+    # flags (TODO: need to be cast?)
+    cmd.start.data = input[3] == 'True'
+    cmd.cancel.data = input[4] == 'True'
+    cmd.shutdown.data = input[5] == 'True'
+    cmd.rc_preempt.data = input[6] == 'True'
+    cmd.pose_preempt.data = input[7] == 'True'
+
+    return cmd
+
 def loopback_cmd_cb(command: rov.Cmd, ser: serial.Serial) -> None:
 
     ''' send received CMD messages down the pipe to the Pico
@@ -73,13 +95,17 @@ def main():
     nmea_pub = rospy.Publisher('nmea_sentence', nmea.Sentence, queue_size=1)
     cmd_pub = rospy.Publisher('/cmd', rov.Cmd, queue_size=1)
 
+    _port = '/dev/ttyACM1'
+
     ser = serial.Serial(
-        port='/dev/ttyACM0',
+        port=_port,
         baudrate=115200,
         parity=serial.PARITY_NONE,
         stopbits=serial.STOPBITS_ONE,
         bytesize=serial.EIGHTBITS
     )
+
+    rospy.logdebug("Serial Connection established on {}".format(_port))
 
     cmd_sub = rospy.Subscriber('/loopback_cmd', rov.Cmd, callback=loopback_cmd_cb, callback_args=(ser))
     motor_sub = rospy.Subscriber('/cmd_vel', geom.Twist, callback=motor_cb, callback_args=(ser))
@@ -91,7 +117,7 @@ def main():
     while not rospy.is_shutdown():
 
         # read input lines, decode bytes -> string
-        input = ser.readline().decode()
+        input = ser.readline().decode().strip()
 
         # 'tokenize' by spaces
         input_split = input.split(" ")
@@ -101,8 +127,10 @@ def main():
             nmea_sentence = str_to_sentence(input_split[1])
             nmea_pub.publish(nmea_sentence)
         elif input_split[0][0:4] == '$CMD':
-            cmd = json_message_converter.convert_json_to_ros_message('rover_msg/Cmd', input_split[1])
-            cmd_pub.publish(cmd)
+            cmd_msg = str_to_command(input_split[1:])
+            # cmd = json_message_converter.convert_json_to_ros_message('rover_msg/Cmd', input_split[1])
+            if cmd_msg is not None:
+                cmd_pub.publish(cmd_msg)
         else:
             print(input)
 
