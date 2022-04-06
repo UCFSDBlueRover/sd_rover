@@ -1,0 +1,34 @@
+<launch>
+
+    <!-- configure args -->
+    <arg name="robot" default="rover_v3"/>
+    <arg name="nav" default="true" />
+    <arg name="rviz" default="true"/>   <!-- use rviz window for robot information -->
+    <arg name="rviz_cfg" default="$(find rover_sim)/rviz/rover_v1.rviz" />
+
+    <!-- load robot description to parameter server (for robot_state_publisher) -->
+    <param name="robot_description" textfile="$(arg robot_desc)" />
+
+    <!-- use robot description to publish robot tf tree -->
+    <!-- tf_prefix: robot tf transforms are prepended with bowser2 to match model.sdf plugin convention-->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+        <param name="tf_prefix" type="string" value=""/>
+    </node>
+
+    <!-- launches rviz with specified configuration (if CLI arg is true)-->
+    <node if="$(arg rviz)" name="rviz" pkg="rviz" type="rviz" args="-d $(arg rviz_cfg)"/>
+
+    <!-- IMU -->
+    <node name="imu_node" pkg="rover_hw_nodes" type="imx219_stereo_cam_node" output="screen" />
+    <!-- stereo camera -->
+    <include file="$(find rover_hw_nodes)/launch/cam.launch">
+    </include>
+    
+    <!-- pico_bridge -->
+    <include file="$(find rover_bringup/launch/bridge.launch">
+        <arg name="gps_topic" value="/rover/fix"/>
+    </include>
+
+    <!-- telemetry -->
+
+</launch>
