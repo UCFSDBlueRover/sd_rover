@@ -95,26 +95,24 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "imx219_stereo_cam_node");
     ros::NodeHandle n;
 
-    // ImageTransport rather than NodeHandle for better compression, naming conventions, etc for image publishing.
-    image_transport::ImageTransport it(n);
+    // // ImageTransport rather than NodeHandle for better compression, naming conventions, etc for image publishing.
+    // image_transport::ImageTransport it(n);
 
-    // advertise our output topics
+    // // advertise our output topics
     
-    // left and right images
-    image_transport::CameraPublisher im0_pub = it.advertiseCamera("/im0", 1, false);
-    image_transport::CameraPublisher im1_pub = it.advertiseCamera("/im1", 1, false);
+    // // left and right images
+    // image_transport::CameraPublisher im0_pub = it.advertiseCamera("/im0", 1, false);
+    // image_transport::CameraPublisher im1_pub = it.advertiseCamera("/im1", 1, false);
     
-    // left and right image info
-    const std::string cname_0 = "waveshare_imx219_left";
-    const std::string url_0 = "file:///home/jetson/catkin_ws/src/sd_rover/rover_hw_nodes/config/stereo_left.yaml";
-    camera_info_manager::CameraInfoManager im0_info(n, cname_0, url_0);
-    im0_info.loadCameraInfo(url_0);
-    const std::string cname_1 = "waveshare_imx219_right";
-    const std::string url_1 = "file:///home/jetson/catkin_ws/src/sd_rover/rover_hw_nodes/config/stereo_right.yaml";
-    camera_info_manager::CameraInfoManager im1_info(n, cname_1, url_1);
-    im0_info.loadCameraInfo(url_1);
-
-
+    // // left and right image info
+    // const std::string cname_0 = "waveshare_imx219_left";
+    // const std::string url_0 = "file:///home/jetson/catkin_ws/src/sd_rover/rover_hw_nodes/config/stereo_left.yaml";
+    // camera_info_manager::CameraInfoManager im0_info(n, cname_0, url_0);
+    // im0_info.loadCameraInfo(url_0);
+    // const std::string cname_1 = "waveshare_imx219_right";
+    // const std::string url_1 = "file:///home/jetson/catkin_ws/src/sd_rover/rover_hw_nodes/config/stereo_right.yaml";
+    // camera_info_manager::CameraInfoManager im1_info(n, cname_1, url_1);
+    // im0_info.loadCameraInfo(url_1);
 
     // imu message
     ros::Publisher imu_pub = n.advertise<sensor_msgs::Imu>("/imu", 10);
@@ -137,53 +135,53 @@ int main(int argc, char **argv)
         printf("Motion sersor NULL\n");
     }
 
-    // configure our cameras with nvarguscamerasrc (CSI connector) pipeline
-    cv::VideoCapture cam0("nvarguscamerasrc sensor-id=0 ! video/x-raw(memory:NVMM), width=640, height=480, format=(string)NV12, framerate=(fraction)20/1 ! nvvidconv flip-method=0 ! video/x-raw, width=640, height=480, format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink", cv::CAP_GSTREAMER);
-    cv::VideoCapture cam1("nvarguscamerasrc sensor-id=1 ! video/x-raw(memory:NVMM), width=640, height=480, format=(string)NV12, framerate=(fraction)20/1 ! nvvidconv flip-method=0 ! video/x-raw, width=640, height=480, format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink", cv::CAP_GSTREAMER);
+    // // configure our cameras with nvarguscamerasrc (CSI connector) pipeline
+    // cv::VideoCapture cam0("nvarguscamerasrc sensor-id=0 ! video/x-raw(memory:NVMM), width=640, height=480, format=(string)NV12, framerate=(fraction)20/1 ! nvvidconv flip-method=0 ! video/x-raw, width=640, height=480, format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink", cv::CAP_GSTREAMER);
+    // cv::VideoCapture cam1("nvarguscamerasrc sensor-id=1 ! video/x-raw(memory:NVMM), width=640, height=480, format=(string)NV12, framerate=(fraction)20/1 ! nvvidconv flip-method=0 ! video/x-raw, width=640, height=480, format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink", cv::CAP_GSTREAMER);
 
-    // make sure both cameras opened correctly
-    if (!cam0.isOpened())
-    {
-       printf("cam0 is not opened.\n");
-       return -1;
-    }
-    if (!cam1.isOpened())
-    {
-       printf("cam1 is not opened.\n");
-       return -1;
-    }
+    // // make sure both cameras opened correctly
+    // if (!cam0.isOpened())
+    // {
+    //    printf("cam0 is not opened.\n");
+    //    return -1;
+    // }
+    // if (!cam1.isOpened())
+    // {
+    //    printf("cam1 is not opened.\n");
+    //    return -1;
+    // }
 
-    // to hold camera frames
-    cv::Mat frame0, frame1;
-    sensor_msgs::ImagePtr msg0, msg1;
+    // // to hold camera frames
+    // cv::Mat frame0, frame1;
+    // sensor_msgs::ImagePtr msg0, msg1;
 
     // to hold IMU values
     sensor_msgs::Imu imuMsg;
 
     // main loop publishes an image from both cameras and an IMU message every iteration
-    ros::Rate rate(10); // loop freq. in Hz
+    ros::Rate rate(50); // loop freq. in Hz
     while (ros::ok())
     {
-        // write camera streams to frames
-        cam0 >> frame0;
-        cam1 >> frame1;
+        // // write camera streams to frames
+        // cam0 >> frame0;
+        // cam1 >> frame1;
 
-        // publish camera frames as images (if they're not empty)
-        if (!frame0.empty())
-        {
-            sensor_msgs::CameraInfo::Ptr cinfo_0(
-                new sensor_msgs::CameraInfo(im0_info.getCameraInfo()));
-            msg0 = cv_bridge::CvImage(std_msgs::Header(), "bgr8", frame0).toImageMsg();
-            im0_pub.publish(msg0, cinfo_0);
-        }
-        if (!frame1.empty())
-        {
-            sensor_msgs::CameraInfo::Ptr cinfo_1(
-                new sensor_msgs::CameraInfo(im1_info.getCameraInfo()));
-            msg1 = cv_bridge::CvImage(std_msgs::Header(), "bgr8", frame1).toImageMsg();
-            im1_pub.publish(msg1, cinfo_1);
-        }
-        cv::waitKey(1);
+        // // publish camera frames as images (if they're not empty)
+        // if (!frame0.empty())
+        // {
+        //     sensor_msgs::CameraInfo::Ptr cinfo_0(
+        //         new sensor_msgs::CameraInfo(im0_info.getCameraInfo()));
+        //     msg0 = cv_bridge::CvImage(std_msgs::Header(), "bgr8", frame0).toImageMsg();
+        //     im0_pub.publish(msg0, cinfo_0);
+        // }
+        // if (!frame1.empty())
+        // {
+        //     sensor_msgs::CameraInfo::Ptr cinfo_1(
+        //         new sensor_msgs::CameraInfo(im1_info.getCameraInfo()));
+        //     msg1 = cv_bridge::CvImage(std_msgs::Header(), "bgr8", frame1).toImageMsg();
+        //     im1_pub.publish(msg1, cinfo_1);
+        // }
+        // cv::waitKey(1);
 
         // read IMU data
         imuDataGet(&stAngles, &stGyroRawData, &stAccelRawData, &stMagnRawData);
