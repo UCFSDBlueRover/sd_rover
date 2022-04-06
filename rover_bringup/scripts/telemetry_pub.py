@@ -10,17 +10,17 @@ import sensor_msgs.msg as sensor
 import geometry_msgs.msg as geom
 import rover_msg.msg as rov
 
-def gps_callback(fix: sensor.NavSatFix, tlm) -> None:
+def gps_callback(fix: sensor.NavSatFix, tlm: rov.Telemetry) -> None:
 
     tlm.fix = fix
 
-def pose_callback(odom: nav.Odometry, tlm) -> None:
+def pose_callback(odom: nav.Odometry, tlm: rov.Telemetry) -> None:
 
     tlm.pose = geom.PoseStamped()
     tlm.pose.header = odom.header
     tlm.pose.pose = odom.pose.pose
 
-def state_callback(state: std.String, tlm) -> None:
+def state_callback(state: std.String, tlm: rov.Telemetry) -> None:
 
     tlm.state = state
 
