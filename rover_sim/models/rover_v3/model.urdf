@@ -11,13 +11,13 @@
         <collision name="base_link_collision">
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <box size=".20 .120 .11"/>
+                <box size=".120 .20 .11"/>
             </geometry>
         </collision>
         <visual name="base_link_visual">
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <box size=".20 .120 .11"/>
+                <box size=".120 .20 .11"/>
             </geometry>
         </visual>
         <inertial name="base_link_inertia">
@@ -58,7 +58,7 @@
         </gazebo>
         <parent link="base_link"/>
         <child link="right_wheel"/>
-        <origin xyz="0.1325 -.015 -0.030" rpy="0 0 -1.5708"/>
+        <origin xyz=".015 0.1325 -0.030" rpy="0 0 0"/>
         <axis xyz="0 1 0"/>
         <!-- <limit effort="10" velocity="5"/> -->
     </joint>
@@ -93,7 +93,7 @@
         </gazebo>
         <parent link="base_link"/>
         <child link="left_wheel"/>
-        <origin xyz="-0.1325 -.015 -0.030" rpy="0 0 -1.5708"/>
+        <origin xyz=".015 -0.1325 -0.030" rpy="0 0 0"/>
         <axis xyz="0 1 0"/>
         <!-- <limit effort="10" velocity="5"/> -->
     </joint>
@@ -128,7 +128,7 @@
         </gazebo>
         <parent link="base_link"/>
         <child link="back_wheel"/>
-        <origin xyz="0.0 .06 -0.05" rpy="0 0 -1.5708"/>
+        <origin xyz="-.06 0.0 -0.05" rpy="0 0 0"/>
         <axis xyz="0 1 0"/>
         <!-- <limit effort="10" velocity="5"/> -->
     </joint>
@@ -162,7 +162,7 @@
         <child link="camera_link"/>
         <!-- <origin xyz="0.0  -.065  0.0" rpy="1.5708 1.5708 0"/> -->
         <!-- the camera plugin faces towards the +X axis by default-->
-        <origin xyz="0.0  -.065  0.0" rpy="0 0 -1.5708"/>
+        <origin xyz="0.0  -.065  0.0" rpy="0 0 0"/>
     </joint>
 
     <!-- a simulation workaround to fix the broken point cloud orientation -->
@@ -195,7 +195,7 @@
             <!-- tf -->
             <publishTf>true</publishTf> <!-- publish the transforms -->
             <publishOdomTF>false</publishOdomTF>
-            <publishWheelTF>true</publishWheelTF>
+            <publishWheelTF>false</publishWheelTF>
             <odometryFrame>odom</odometryFrame>
             <robotBaseFrame>base_link</robotBaseFrame>
 
@@ -223,7 +223,7 @@
                 </image>
                 <clip>
                     <near>0.5</near>
-                    <far>3</far>
+                    <far>5</far>
                 </clip>
                 <!-- no distortions: "ideal" camera -->
                 <distortion>
