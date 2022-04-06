@@ -58,7 +58,7 @@
         </gazebo>
         <parent link="base_link"/>
         <child link="right_wheel"/>
-        <origin xyz="0.1325 -.015 -0.030" rpy="0 0 -1.5708"/>
+        <origin xyz="-0.1325 -.015 -0.030" rpy="0 0 -1.5708"/>
         <axis xyz="0 1 0"/>
         <!-- <limit effort="10" velocity="5"/> -->
     </joint>
@@ -93,7 +93,7 @@
         </gazebo>
         <parent link="base_link"/>
         <child link="left_wheel"/>
-        <origin xyz="-0.1325 -.015 -0.030" rpy="0 0 -1.5708"/>
+        <origin xyz="0.1325 -.015 -0.030" rpy="0 0 -1.5708"/>
         <axis xyz="0 1 0"/>
         <!-- <limit effort="10" velocity="5"/> -->
     </joint>
@@ -183,9 +183,9 @@
             <!-- 'physical' characteristics -->
             <leftJoint>left_joint</leftJoint>
             <rightJoint>right_joint</rightJoint>
-            <wheelSeparation>.24</wheelSeparation>
-            <wheelDiameter>0.04</wheelDiameter>
-            <wheelTorque>1</wheelTorque>   <!-- in Nm -->
+            <wheelSeparation>.28</wheelSeparation>
+            <wheelDiameter>0.12</wheelDiameter>
+            <wheelTorque>.25</wheelTorque>   <!-- in Nm -->
 
             <!-- plugin characteristics -->
             <odometrySource>world</odometrySource> 
