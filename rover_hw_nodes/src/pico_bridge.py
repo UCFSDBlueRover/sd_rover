@@ -13,15 +13,6 @@ import geometry_msgs.msg as geom
 import nmea_msgs.msg as nmea
 import rover_msg.msg as rov
 
-class PicoBridge():
-
-    def __init__():
-        pass
-
-    def run():
-        pass
-
-
 def str_to_sentence(input: str) -> nmea.Sentence:
 
     ''' Converts a given input string to an nmea_msgs/Sentence message
@@ -58,11 +49,11 @@ def str_to_command(input: list) -> rov.Cmd:
         return None
 
     # flags (TODO: need to be cast?)
-    cmd.start.data = input[3] == 'True'
-    cmd.cancel.data = input[4] == 'True'
-    cmd.shutdown.data = input[5] == 'True'
-    cmd.rc_preempt.data = input[6] == 'True'
-    cmd.pose_preempt.data = input[7] == 'True'
+    cmd.start.data          = (input[3] == 'True')
+    cmd.cancel.data         = (input[4] == 'True')
+    cmd.shutdown.data       = (input[5] == 'True')
+    cmd.rc_preempt.data     = (input[6] == 'True')
+    cmd.pose_preempt.data   = (input[7] == 'True')
 
     return cmd
 
@@ -83,20 +74,37 @@ def loopback_cmd_cb(command: rov.Cmd, ser: serial.Serial) -> None:
 def motor_cb(twist: geom.Twist, ser: serial.Serial) -> None:
 
     ''' on receive Twist messages for the motors, convert to PWM duty cycles and pass to Pico '''
+    pass
 
+def pwm_cb(msg: rov.Motors, ser: serial.Serial) -> None:
 
-
+    # unpack msg to dictionary
+    pwm = [msg.dir1.data, 
+           msg.pwm1.data, 
+           msg.dir2.data, 
+           msg.pwm2.data]
+    # cast all items to str and join
+    msg_string = ''.join((str(e) + " ") for e in pwm)
+    # create $MTR string and send
+    pwm_string = "$MTR " + msg_string + '\n'
+    rospy.logdebug(pwm_string)
+    encoded = pwm_string.encode('utf-8')
+    ser.write(encoded)
 
 def main():
 
-    rospy.init_node('pico_bridge', anonymous=True)
+    rospy.init_node('pico_bridge', anonymous=True, log_level=rospy.DEBUG)
 
     # publishers for data streams FROM the pico
     nmea_pub = rospy.Publisher('nmea_sentence', nmea.Sentence, queue_size=1)
     cmd_pub = rospy.Publisher('/cmd', rov.Cmd, queue_size=1)
 
-    _port = '/dev/ttyACM1'
+    # cmd_sub = rospy.Subscriber('/loopback_cmd', rov.Cmd, callback=loopback_cmd_cb, callback_args=(ser))
+    # motor_sub = rospy.Subscriber('/cmd_vel', geom.Twist, callback=motor_cb, callback_args=(ser))
+    pwm_sub = rospy.Subscriber('/motors', rov.Motors, callback=pwm_cb, callback_args=(ser))
 
+    # establish serial connection with the pico
+    _port = '/dev/ttyACM3'
     ser = serial.Serial(
         port=_port,
         baudrate=115200,
@@ -107,17 +115,18 @@ def main():
 
     rospy.logdebug("Serial Connection established on {}".format(_port))
 
-    cmd_sub = rospy.Subscriber('/loopback_cmd', rov.Cmd, callback=loopback_cmd_cb, callback_args=(ser))
-    motor_sub = rospy.Subscriber('/cmd_vel', geom.Twist, callback=motor_cb, callback_args=(ser))
-
     if not ser.is_open:
-        rospy.logerr("Couldn't open serial port")
+        rospy.logerr("Couldn't open serial port.")
         return
 
     while not rospy.is_shutdown():
 
         # read input lines, decode bytes -> string
-        input = ser.readline().decode().strip()
+        try:
+            input = ser.readline().decode().strip()
+        except serial.SerialException as e:
+            rospy.logerr_once("Issue with serial read: {}".format(e))
+            continue
 
         # 'tokenize' by spaces
         input_split = input.split(" ")
