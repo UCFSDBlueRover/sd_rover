@@ -1,5 +1,7 @@
 <launch>
 
+    <!-- brings up the pico_bridge, as well as any nodes that are designed to handle input/output to it -->
+
     <arg name="gps_topic" default="/fix" />
 
     <!-- initialize the Pico bridge for serial communication between SBC and Pico-->
