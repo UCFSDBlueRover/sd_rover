@@ -1,0 +1,12 @@
+<launch>
+
+    <!-- this file launches our rosbag recording of relevant topics, satisfying criteria for R4.8
+         for now, we're just going to grab everything, rather than identifying specific topics
+    -->
+
+    <arg name="filename" default="main"/>
+    <arg name="location" default="/home/jetson/rover_logs/" /> <!-- make sure this folder actually exists -->
+
+    <node pkg="rosbag" type="record" name="$(arg filename)" output="screen" args="--all -o $(arg location)"/>
+
+</launch>

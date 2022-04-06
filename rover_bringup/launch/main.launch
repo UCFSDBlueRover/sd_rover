@@ -1,5 +1,9 @@
 <launch>
 
+    <!-- the main entry point for the rover's autonomy software stack
+         handles the bringup of (hopefully) every node and service we need for full funcitonality
+    -->
+
     <!-- configure args -->
     <arg name="robot" default="rover_v3"/>
     <arg name="nav" default="true" />
@@ -25,10 +29,17 @@
     </include>
     
     <!-- pico_bridge -->
-    <include file="$(find rover_bringup/launch/bridge.launch">
+    <include file="$(find rover_bringup)/launch/bridge.launch">
         <arg name="gps_topic" value="/rover/fix"/>
     </include>
 
     <!-- telemetry -->
+    <node name="telemetry_pub" pkg="rover_bringup" type="telemetry_pub.py" output="screen" />
+
+    <!-- logging -->
+    <include file="$(find rover_bringup)/launch/logging.launch" >
+        <arg name="filename" value="main"/>
+        <!-- <arg name="location" value="" /> -->
+    </include>
 
 </launch>
