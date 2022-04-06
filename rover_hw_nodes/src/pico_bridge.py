@@ -5,9 +5,11 @@
 # ros imports
 import rospy
 from rospy_message_converter import json_message_converter
+
 # python imports
 import serial
 
+# message imports
 import std_msgs.msg as std
 import geometry_msgs.msg as geom
 import nmea_msgs.msg as nmea
@@ -84,6 +86,9 @@ def motor_cb(twist: geom.Twist, ser: serial.Serial) -> None:
 
     ''' on receive Twist messages for the motors, convert to PWM duty cycles and pass to Pico '''
 
+def tlm_cb(tlm: rov.Telemetry, ser: serial.Serial) -> None:
+
+    ''' when we receive telemetry messages, pass them through to the ground station to be transmitted '''
 
 
 
@@ -109,6 +114,7 @@ def main():
 
     cmd_sub = rospy.Subscriber('/loopback_cmd', rov.Cmd, callback=loopback_cmd_cb, callback_args=(ser))
     motor_sub = rospy.Subscriber('/cmd_vel', geom.Twist, callback=motor_cb, callback_args=(ser))
+    tlm_sub = rospy.Subscriber('/telemetry', rov.Telemetry, callback=tlm_cb, callback_args=(ser))
 
     if not ser.is_open:
         rospy.logerr("Couldn't open serial port")
@@ -122,15 +128,21 @@ def main():
         # 'tokenize' by spaces
         input_split = input.split(" ")
 
+        prefix = input_split[0][0:4]    # pull prefix from messages to switch
+
         # identify NMEA strings, publish them
-        if input_split[0][0:4] == '$GPS':
+        if prefix == '$GPS':
             nmea_sentence = str_to_sentence(input_split[1])
             nmea_pub.publish(nmea_sentence)
-        elif input_split[0][0:4] == '$CMD':
+        # commands from ground station
+        elif prefix == '$CMD':
             cmd_msg = str_to_command(input_split[1:])
             # cmd = json_message_converter.convert_json_to_ros_message('rover_msg/Cmd', input_split[1])
             if cmd_msg is not None:
                 cmd_pub.publish(cmd_msg)
+        # encoder ticks to be published
+        elif prefix == '$ENC':
+            pass
         else:
             print(input)
 
