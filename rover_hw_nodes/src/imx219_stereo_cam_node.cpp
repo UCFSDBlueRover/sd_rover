@@ -128,11 +128,11 @@ int main(int argc, char **argv)
     imuInit(&enMotionSensorType);
     if(IMU_EN_SENSOR_TYPE_ICM20948 == enMotionSensorType)
     {
-        printf("Motion sersor is ICM-20948\n" );
+        printf("Motion sensor is ICM-20948\n" );
     }
     else
     {
-        printf("Motion sersor NULL\n");
+        printf("Motion sensor NULL\n");
     }
 
     // // configure our cameras with nvarguscamerasrc (CSI connector) pipeline
