@@ -37,6 +37,8 @@ void buildImuMsg(IMU_ST_ANGLES_DATA stAngles, IMU_ST_SENSOR_DATA stGyroRawData,
 
     // populate header
     imuMsg->header = std_msgs::Header();
+    imuMsg->header.stamp = ros::Time::now();
+    imuMsg->header.frame_id = "imu";
 
     // orientation: convert RPY from degrees to radians
     tf2::Quaternion quat;
