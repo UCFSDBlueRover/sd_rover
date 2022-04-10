@@ -30,16 +30,19 @@ def main():
     rospy.init_node('telemetry_pub', anonymous=True, log_level=rospy.DEBUG)
 
     tlm = rov.Telemetry()
+    tlm.fix = sensor.NavSatFix()
+    tlm.pose = geom.PoseStamped()
+    tlm.state.data = "-"
 
     # configure subscriber callbacks
     rospy.Subscriber('/fix', sensor.NavSatFix, callback=gps_callback, callback_args=(tlm))  # GPS
-    rospy.Subscriber('/pose', nav.Odometry, callback=pose_callback, callback_args=(tlm))
+    rospy.Subscriber('/odom', nav.Odometry, callback=pose_callback, callback_args=(tlm))
     rospy.Subscriber('/states/state', std.String, callback=state_callback, callback_args=(tlm))
 
     # configure tlm publisher
     tlm_pub = rospy.Publisher('/telemetry', rov.Telemetry, queue_size=1)
 
-    rate = rospy.Rate(.1)   # every ten seconds
+    rate = rospy.Rate(.2)   # every ten seconds
 
     while not rospy.is_shutdown():
 
@@ -47,7 +50,8 @@ def main():
         
         rate.sleep()
 
-
+if __name__=='__main__':
+    main()
 
 
 
