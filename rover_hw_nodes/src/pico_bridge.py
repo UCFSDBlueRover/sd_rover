@@ -8,6 +8,7 @@ from rospy_message_converter import json_message_converter
 
 # python imports
 import serial
+from typing import Tuple
 
 # message imports
 import std_msgs.msg as std
@@ -59,6 +60,16 @@ def str_to_command(input: list) -> rov.Cmd:
 
     return cmd
 
+def ticks_to_message(input: list) -> Tuple[std.Int64, std.Int64]:
+
+    l_ticks = std.Int64()
+    r_ticks = std.Int64()
+
+    l_ticks.data = int(input[1])
+    r_ticks.data = int(input[3])
+
+    return (l_ticks, r_ticks)
+
 def loopback_cmd_cb(command: rov.Cmd, ser: serial.Serial) -> None:
 
     ''' send received CMD messages down the pipe to the Pico
@@ -73,16 +84,26 @@ def loopback_cmd_cb(command: rov.Cmd, ser: serial.Serial) -> None:
     encoded = cmd_string.encode('utf-8')
     ser.write(encoded)
 
-def motor_cb(twist: geom.Twist, ser: serial.Serial) -> None:
-
-    ''' on receive Twist messages for the motors, convert to PWM duty cycles and pass to Pico '''
-
 def tlm_cb(tlm: rov.Telemetry, ser: serial.Serial) -> None:
 
-    ''' when we receive telemetry messages, pass them through to the ground station to be transmitted '''
+    ''' when we receive telemetry messages, pass them through to the pico to be transmitted '''
 
+    tlm_dict = [tlm.state.data,
+                "{:.2f}".format(tlm.pose.pose.position.x),
+                "{:.2f}".format(tlm.pose.pose.position.y),
+                "{:.2f}".format(tlm.pose.pose.position.z),
+                "{:.6f}".format(tlm.fix.latitude),
+                "{:.6f}".format(tlm.fix.longitude),
+                "{:.3f}".format(tlm.fix.altitude)]
 
-    pass
+    # cast all items to str and join
+    msg_string = ''.join((str(e) + " ") for e in tlm_dict)
+    # create $MTR string and send
+    tlm_string = "$TLM " + msg_string + '\n'
+
+    rospy.logdebug(tlm_string)
+    encoded = tlm_string.encode('utf-8')
+    ser.write(encoded)
 
 def pwm_cb(msg: rov.Motors, ser: serial.Serial) -> None:
 
@@ -107,12 +128,11 @@ def main():
     nmea_pub = rospy.Publisher('nmea_sentence', nmea.Sentence, queue_size=1)
     cmd_pub = rospy.Publisher('/cmd', rov.Cmd, queue_size=1)
 
-    # cmd_sub = rospy.Subscriber('/loopback_cmd', rov.Cmd, callback=loopback_cmd_cb, callback_args=(ser))
-    # motor_sub = rospy.Subscriber('/cmd_vel', geom.Twist, callback=motor_cb, callback_args=(ser))
-    pwm_sub = rospy.Subscriber('/motors', rov.Motors, callback=pwm_cb, callback_args=(ser))
+    l_tick_pub = rospy.Publisher('/left_ticks', std.Int64, queue_size=1)
+    r_tick_pub = rospy.Publisher('/right_ticks', std.Int64, queue_size=1)
 
-    # establish serial connection with the pico
-    _port = '/dev/ttyACM3'
+    # attempt to establish serial connection with the pico
+    _port = '/dev/ttyACM1'
     ser = serial.Serial(
         port=_port,
         baudrate=115200,
@@ -120,12 +140,12 @@ def main():
         stopbits=serial.STOPBITS_ONE,
         bytesize=serial.EIGHTBITS
     )
-
     rospy.logdebug("Serial Connection established on {}".format(_port))
 
     cmd_sub = rospy.Subscriber('/loopback_cmd', rov.Cmd, callback=loopback_cmd_cb, callback_args=(ser))
-    motor_sub = rospy.Subscriber('/cmd_vel', geom.Twist, callback=motor_cb, callback_args=(ser))
+    # motor_sub = rospy.Subscriber('/cmd_vel', geom.Twist, callback=motor_cb, callback_args=(ser))
     tlm_sub = rospy.Subscriber('/telemetry', rov.Telemetry, callback=tlm_cb, callback_args=(ser))
+    pwm_sub = rospy.Subscriber('/motors', rov.Motors, callback=pwm_cb, callback_args=(ser))
 
     if not ser.is_open:
         rospy.logerr("Couldn't open serial port.")
@@ -157,7 +177,11 @@ def main():
                 cmd_pub.publish(cmd_msg)
         # encoder ticks to be published
         elif prefix == '$ENC':
-            pass
+            # get ticks messages from string
+            left_tick, right_tick = ticks_to_message(input_split[1:])
+            # publish tick messages
+            l_tick_pub.publish(left_tick)
+            r_tick_pub.publish(right_tick)
         else:
             print(input)
 
