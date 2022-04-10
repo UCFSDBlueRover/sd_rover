@@ -56,6 +56,7 @@ add_message_files(
   Heartbeat.msg
   Cmd.msg
   Telemetry.msg
+  Motors.msg
 )
 
 ## Generate services in the 'srv' folder
