@@ -8,13 +8,13 @@ import nav_msgs.msg as nav
 import std_msgs.msg as std
 
 PWM_INCREMENT = 1
-TICKS_PER_REV = 16   # TODO
+TICKS_PER_REV = 48
 
 # Wheel radius (meters)
 WHEEL_RADIUS = .06 
 
 # Distance from center of left tire to center of right tire (meters)
-WHEEL_BASE = .28
+WHEEL_BASE = .205
 
 METERS_PER_REV = WHEEL_RADIUS * math.pi * 2
 REVS_PER_METER = 1 / METERS_PER_REV
@@ -35,10 +35,10 @@ DRIFT_MULTIPLIER = 120
 PWM_TURN = 60
 
 # Set maximum and minimum limits for the PWM values
-PWM_MIN = 0     # TODO
+PWM_MIN = 30     # TODO
 PWM_MAX = 100   # TODO
 
-RPM = 160
+RPM = 120
 MAX_LINEAR_X = METERS_PER_REV / (RPM / 60)
 #######################################################################
 
