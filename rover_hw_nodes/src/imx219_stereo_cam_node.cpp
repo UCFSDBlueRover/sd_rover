@@ -37,6 +37,8 @@ void buildImuMsg(IMU_ST_ANGLES_DATA stAngles, IMU_ST_SENSOR_DATA stGyroRawData,
 
     // populate header
     imuMsg->header = std_msgs::Header();
+    imuMsg->header.stamp = ros::Time::now();
+    imuMsg->header.frame_id = "imu";
 
     // orientation: convert RPY from degrees to radians
     tf2::Quaternion quat;
@@ -128,11 +130,11 @@ int main(int argc, char **argv)
     imuInit(&enMotionSensorType);
     if(IMU_EN_SENSOR_TYPE_ICM20948 == enMotionSensorType)
     {
-        printf("Motion sersor is ICM-20948\n" );
+        printf("Motion sensor is ICM-20948\n" );
     }
     else
     {
-        printf("Motion sersor NULL\n");
+        printf("Motion sensor NULL\n");
     }
 
     // // configure our cameras with nvarguscamerasrc (CSI connector) pipeline

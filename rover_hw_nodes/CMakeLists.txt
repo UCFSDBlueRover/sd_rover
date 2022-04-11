@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   cv_bridge
+  camera_info_manager
   image_transport
   sensor_msgs
   std_msgs
@@ -33,7 +34,11 @@ find_package(OpenCV REQUIRED)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES rover_hw_nodes
-  CATKIN_DEPENDS roscpp rospy
+  CATKIN_DEPENDS 
+    roscpp 
+    rospy
+    camera_info_manager
+    image_transport
   # DEPENDS opencv
 )
 
