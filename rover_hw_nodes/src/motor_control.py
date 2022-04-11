@@ -33,7 +33,7 @@ K_P = 530   # TODO
 b = 0 # TODO
  
 # Correction multiplier for drift. Chosen through experimentation.
-DRIFT_MULTIPLIER = 120
+DRIFT_MULTIPLIER = 120 # TODO
  
 # Turning PWM output (0 = min, 100 = max for PWM values)
 PWM_TURN = 60
@@ -47,14 +47,37 @@ PWM_MAX_RIGHT = 100
 RPM = 120
 MAX_LINEAR_X = METERS_PER_REV / (RPM / 60)
 
-############################################################
-############## END OF CONSTANTS ############################
-############################################################
+##################################################
+############## END OF CONSTANTS ##################
+##################################################
+
+class encoderState():
+    def __init__(self):
+        self.prevTime = rospy.Time.now()
+        self.prevCount = 0
+        self.velocity = 0
+
+def tick_cb(tick_msg: std.Int64, enc: encoderState) -> None:
+
+    """
+    When we receive ticks, use the encoderState provided to calculate velocity.
+    """
+
+    # ticks since last callback
+    ticks = tick_msg.data - enc.prevCount
+    # speed from ticks
+    enc.velocity = ticks / TICKS_PER_METER / (rospy.Time.now() - enc.prevTime).to_sec()
+    # update timestamp and prevCount
+    enc.prevTime = rospy.Time.now()
+    enc.prevCount = tick_msg.data
 
 pwm_update_time = None
 motor_msg = rov.Motors()
 
-def calc_pwm_values(cmd_vel: geom.Twist) -> None:
+prevDiff = 0
+prevPrevDiff = 0
+
+def calc_pwm_values(cmd_vel: geom.Twist, enc1: encoderState, enc2: encoderState) -> None:
 
     global motor_msg
     global pwm_update_time
@@ -68,6 +91,10 @@ def calc_pwm_values(cmd_vel: geom.Twist) -> None:
         linear_x = -MAX_LINEAR_X
     else:
         linear_x = cmd_vel.linear.x
+
+    # set speeds
+    pwmLeftReq = math.ceil(K_P * abs(linear_x) + b)
+    pwmRightReq = math.ceil(K_P * abs(linear_x) + b)
 
     # checks if we need to turn
     if cmd_vel.angular.z != 0.0:
@@ -84,12 +111,19 @@ def calc_pwm_values(cmd_vel: geom.Twist) -> None:
             right_dir = 0   # back
     # if we don't need to turn, just go straight
     else:
+        # average out differences in wheel velocities
+        diff = enc1.velocity - enc2.velocity
+        avgDiff = (diff + prevDiff + prevPrevDiff) / 3  
+        prevPrevDiff = prevDiff
+        prevDiff = diff
+
+        # correct PWM values to make vehicle go (mostly) straight
+        pwmLeftReq -= math.ceil(avgDiff * DRIFT_MULTIPLIER)
+        pwmRightReq += math.ceil(avgDiff * DRIFT_MULTIPLIER)
+
         # set directions
         left_dir = 1 if (linear_x > 0) else 0
-        right_dir = 1 if (linear_x > 0) else 0
-        # set speeds
-        pwmLeftReq = math.ceil(K_P * abs(linear_x) + b)
-        pwmRightReq = math.ceil(K_P * abs(linear_x) + b)
+        right_dir = left_dir
 
     # handle (too) low values
     if abs(pwmLeftReq) < PWM_MIN_LEFT:
@@ -107,8 +141,8 @@ def calc_pwm_values(cmd_vel: geom.Twist) -> None:
     motor_msg.dir2.data = right_dir
     motor_msg.pwm2.data = pwmRightReq
 
-    print("LEFT: {}\n".format(pwmLeftReq))
-    print("RIGHT: {}\n".format(pwmRightReq))
+    # print("LEFT: {}\n".format(pwmLeftReq))
+    # print("RIGHT: {}\n".format(pwmRightReq))
 
 def main():
 
@@ -117,8 +151,14 @@ def main():
     rospy.init_node('motor_control', anonymous=True, log_level=rospy.DEBUG)
 
     motor_pub = rospy.Publisher('/motors', rov.Motors, queue_size=1)
+
+    # listen for ticks (for wheel velocities)
+    enc1 = encoderState()
+    rospy.Subscriber('/left_ticks', std.Int64, callback=tick_cb, callback_args=(enc1))
+    enc2 = encoderState()
+    rospy.Subscriber('/right_ticks', std.Int64, callback=tick_cb, callback_args=(enc2))
     # listen for motor commands
-    rospy.Subscriber('/cmd_vel', geom.Twist, callback=calc_pwm_values)
+    rospy.Subscriber('/cmd_vel', geom.Twist, callback=calc_pwm_values, callback_args=(enc1, enc2))
 
     # initialize pwm_update_time
     pwm_update_time = rospy.Time.now()
