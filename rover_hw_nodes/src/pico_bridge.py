@@ -40,6 +40,10 @@ def str_to_sentence(input: str) -> nmea.Sentence:
 
 def str_to_command(input: list) -> rov.Cmd:
 
+    """
+    Input format: X Y Z start cancel shutdown rc_preempt pose_preempt
+    """
+
     cmd = rov.Cmd()
 
     cmd.target = geom.Point()
@@ -166,8 +170,7 @@ def main():
     )
     rospy.logdebug("Serial Connection established on {}".format(_port))
 
-    cmd_sub = rospy.Subscriber('/loopback_cmd', rov.Cmd, callback=loopback_cmd_cb, callback_args=(ser))
-    # motor_sub = rospy.Subscriber('/cmd_vel', geom.Twist, callback=motor_cb, callback_args=(ser))
+    # cmd_sub = rospy.Subscriber('/loopback_cmd', rov.Cmd, callback=loopback_cmd_cb, callback_args=(ser))
     tlm_sub = rospy.Subscriber('/telemetry', rov.Telemetry, callback=tlm_cb, callback_args=(ser))
     pwm_sub = rospy.Subscriber('/motors', rov.Motors, callback=pwm_cb, callback_args=(ser))
 
@@ -213,7 +216,7 @@ def main():
             l_tick_pub.publish(left_tick)
             r_tick_pub.publish(right_tick)
         else:
-            print(input)
+            rospy.logdebug("Unhandled prefix: {}".format(input))
 
 
 if __name__=='__main__':
