@@ -13,6 +13,10 @@ import geometry_msgs.msg as geom
 import nav_msgs.msg as nav
 import std_msgs.msg as std
 
+#################################################
+############### CONSTANTS #######################
+#################################################
+
 TICKS_PER_REV = 48
 # Wheel radius (meters)
 WHEEL_RADIUS = .06 
@@ -25,6 +29,11 @@ TICKS_PER_METER = TICKS_PER_REV * REVS_PER_METER
 
 K_P = 1
 
+##################################################
+############## END OF CONSTANTS ##################
+##################################################
+
+# track encoder values in class
 # since static vars aren't a thing in python
 class encoderState():
     def __init__(self):
@@ -33,6 +42,10 @@ class encoderState():
         self.velocity = 0
 
 def tick_cb(ticks: std.Int64, enc: encoderState) -> None:
+
+    """
+    When we receive ticks, use the encoderState provided to calculate velocity.
+    """
 
     # ticks since last callback
     ticks = ticks.data - enc.prevCount
@@ -46,8 +59,9 @@ def main():
 
     rospy.init_node('motor_control', anonymous=True, log_level=rospy.DEBUG)
 
-    tf_br = tf2_ros.TransformBroadcaster()
-    odom_pub = rospy.Publisher('/rover/odom', nav.Odometry, queue_size=1)
+    # publishers
+    tf_br = tf2_ros.TransformBroadcaster()  # for odom transform
+    odom_pub = rospy.Publisher('/rover/odom', nav.Odometry, queue_size=1)   # for odom message
 
     # listen for ticks
     left_enc = encoderState()
@@ -67,6 +81,7 @@ def main():
 
         timestamp = rospy.Time.now()
 
+        # calculate velocities in x, y, theta from wheel velocities
         v_left = left_enc.velocity
         v_right = right_enc.velocity
 
@@ -74,11 +89,13 @@ def main():
         v_y = 0     # robot can't move sideways
         v_theta = ((v_right - v_left) / WHEEL_BASE) * K_P   # unicycle model
 
+        # predict change in position
         dt = (timestamp - prevTime).to_sec()
         delta_x = (v_x * math.cos(theta)) * dt
         delta_y = (v_x * math.sin(theta)) * dt
         delta_theta = v_theta * dt
 
+        # update position
         x += delta_x
         y += delta_y
         theta += delta_theta
@@ -105,7 +122,7 @@ def main():
         # set the position
         odom.pose.pose.position.x = x
         odom.pose.pose.position.y = y
-        odom.pose.pose.position.z = 0.0
+        odom.pose.pose.position.z = 0.0     # we "never" move in Z
         odom.pose.pose.orientation = odom_quat
 
         # set the velocity
