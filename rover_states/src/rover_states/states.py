@@ -178,6 +178,7 @@ class Standby(smach.State):
 
         if data.rc_preempt is not None:
             if data.rc_preempt.data:
+                self._rc_msg = data.rc
                 self._rc_preempt = True
             
         # check for the shutdown flag    
