@@ -285,8 +285,9 @@ class Waypoint(smach.State):
 class Manual(smach.State):
 
     def __init__(self):
-        smach.State.__init__(self, outcomes=['resume_standby', 'resume_waypoint', 'error'])
-        # TODO: add input_key prev_state
+        smach.State.__init__(self, outcomes=['resume_standby', 'resume_waypoint', 'error'],
+                                   input_keys=['rc_msg'],
+                                   output_keys=[])
 
         # flags
         self._rc_un_preempt = False # if true, we return to previous state
@@ -294,15 +295,65 @@ class Manual(smach.State):
         # publish motor commands for the base_controller to actuate
         self.motor_pub = rospy.Publisher('/cmd_vel', geom.Twist, queue_size=10)
 
-        # subscribe to commands
-        rospy.Subscriber('/command', rov.Cmd, callback=self.cmd_callback)
+        self._fwd_period    = rospy.Duration(2.5)    # how long each forward RC burst lasts
+        self._rev_period    = rospy.Duration(2.5)    # how long each revers RC burst lasts
+        self._left_period   = rospy.Duration(2.5)    # time to turn roughly -90 degrees
+        self._right_period  = rospy.Duration(2.5)    # time to turn roughly +90 degrees
+
+        self._rc = rov.RC()
+        self._rc_update = True # update flag
 
     def execute(self, userdata):
+
+        # subscribe to commands
+        rospy.Subscriber('/cmd', rov.Cmd, callback=self.cmd_callback)
+
+        # read the userdata to find the RC message that got us here
+        self._rc = json_message_converter.convert_json_to_ros_message("rover_msg/RC", userdata.rc_msg)
+        self._rc_update = True
 
         rate = rospy.Rate(20)
 
         while not rospy.is_shutdown():
-        
+            
+            if self._rc_update:
+                
+                # get burst period based on which field is filled
+                # making the assumption here that only one RC field is used at a time
+                period = None
+                dir = 1
+                if self._rc.forward > 0:
+                    dir = 1
+                    period = self._fwd_period
+                elif self._rc.reverse > 0:
+                    dir = -1
+                    period = self._rev_period
+                elif self._rc.left > 0:
+                    period = self._left_period
+                elif self._rc.right > 0:
+                    period = self._right_period
+
+                # create message to publish
+                # values assigned don't matter much, since they'll be truncated by motor_control
+                twist = geom.Twist()
+                twist.linear.x = (1.0 * dir) if (self._rc.forward > 0) else 0.0
+                twist.linear.y = (1.0 * dir) if (self._rc.reverse > 0) else 0.0
+                twist.linear.z = 0.0
+                twist.angular.x = 0
+                twist.angular.y = 0
+                twist.angular.z = (1.0 * dir) if (self._rc.left > 0 or self._rc.right > 0) else 0.0
+
+                time = rospy.Time.now()
+                loop_rate = rospy.Rate(5)   # Hz
+                # set /cmd_vel message for given duration
+                while rospy.Time.now() < (time + period):
+                    
+                    self.motor_pub.publish(twist)
+
+                    loop_rate.sleep()
+                
+                self._rc_update = False
+
             if self._rc_un_preempt:
                 return 'rc_un_preempt'
 
@@ -312,23 +363,10 @@ class Manual(smach.State):
 
         if data.rc_preempt is not None:
 
-            # if our RC preempt is active, pass motor commands to base_controller via /cmd_vel
-            if data.rc_preempt.data:
-                self.motor_pub.publish(data.motors)
-            elif not data.rc_preempt.data:
-
-                # zero out a Twist message to stop motors
-                twist = geom.Twist()
-                twist.linear.x = 0
-                twist.linear.y = 0
-                twist.linear.z = 0
-                twist.angular.x = 0
-                twist.angular.y = 0
-                twist.angular.z = 0
-
-                self.motor_pub.publish(twist)
-
-                # set rc_un_preempt to true to return to previous state
+            if data.rc_preempt:
+                self._rc = data.rc
+                self._rc_update = True
+            else:
                 self._rc_un_preempt = True
 
 class Warn(smach.State):
