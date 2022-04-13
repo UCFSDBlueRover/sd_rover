@@ -20,6 +20,7 @@ def main():
     cmd_pub = rospy.Publisher('/cmd', rov.Cmd, queue_size=1)
     gps_pub = rospy.Publisher('/fix', sensor.NavSatFix, queue_size=1)
     imu_pub = rospy.Publisher('/imu', sensor.Imu, queue_size=1)
+    odom_pub = rospy.Publisher('/odom', nav.Odometry, queue_size=1)
 
     loop_rate = rospy.Rate(10)
     while not rospy.is_shutdown():
@@ -44,6 +45,12 @@ def main():
         imu.header = std.Header()
         imu.header.stamp = rospy.Time.now()
         imu_pub.publish(imu)
+
+        # publish an (empty) Odom message
+        odom = nav.Odometry()
+        odom.header = std.Header()
+        odom.header.stamp = rospy.Time.now()
+        odom_pub.publish(odom)
 
         loop_rate.sleep()
 
