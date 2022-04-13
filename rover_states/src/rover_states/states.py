@@ -117,15 +117,16 @@ class Standby(smach.State):
 
     def __init__(self):
         smach.State.__init__(self, outcomes=['got_pose', 'rc_preempt', 'error', 'end'],
-                                   output_keys=['pose_target', 'end_status', 'end_reason'] )
+                                   output_keys=['pose_target', 'rc_msg', 'end_status', 'end_reason'] )
 
         # flags
         self._rc_preempt = False
         self._pose_preempt = False
         self._end = False
 
-        # _pose_target is filled when we receive a pose target from Cmd
-        self._pose_target = None
+        # userdata
+        self._pose_target = None    # _pose_target is filled when we receive a pose target from Cmd
+        self._rc_msg = None         # _rc_msg holds RC commands from Cmd
 
     def execute(self, userdata):
 
@@ -139,6 +140,7 @@ class Standby(smach.State):
             # if we received motor commands, 
             if self._rc_preempt:
                 rospy.logdebug("Standby preempted by RC command.")
+                userdata.rc_msg = json_message_converter.convert_ros_message_to_json(self._rc_msg)  # add userdata for MANUAL
                 return 'rc_preempt'
             # if we received a pose in Command msg, pass that as output of state
             if self._pose_preempt:
@@ -156,7 +158,7 @@ class Standby(smach.State):
 
             # check for user-initiated end
             if self._end:
-                rospy.logdebug('Standby preempted by end signal.')
+                rospy.logdebug('Standby preempted by SHUTDOWN signal.')
                 userdata.end_reason = 'User initiated end state.'
                 userdata.end_status = 'success'
                 return 'end'
