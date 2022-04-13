@@ -103,6 +103,11 @@ class Boot(smach.State):
         if msg.header is not None:
             self._imu_flag = True
 
+    def odom_callback(self, msg):
+
+        if msg.header is not None:
+            self._odom_flag = True
+
     # TODO
     def read_params(self):
         ''' Reads parameters from loaded config file to set up this states topic subscribers/publishers, etc. '''
