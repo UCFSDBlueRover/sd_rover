@@ -11,20 +11,20 @@
         <collision name="base_link_collision">
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <box size=".120 .20 .11"/>
+                <box size=".2 .12 .11"/>
             </geometry>
         </collision>
         <visual name="base_link_visual">
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <box size=".120 .20 .11"/>
+                <box size=".2 .12 .11"/>
             </geometry>
         </visual>
         <inertial name="base_link_inertia">
             <mass value="1.242"/>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <!-- https://en.wikipedia.org/wiki/List_of_moments_of_inertia -->
-            <inertia ixx=".0016" ixy="0" ixz="0" iyy=".00651" iyz="0" izz=".00607"/>
+            <inertia ixx=".0017" ixy="0" ixz="0" iyy=".00713992" iyz="0" izz=".0066992"/>
         </inertial>
     </link>
 
@@ -58,7 +58,7 @@
         </gazebo>
         <parent link="base_link"/>
         <child link="right_wheel"/>
-        <origin xyz="-0.1325 -.015 -0.030" rpy="0 0 -1.5708"/>
+        <origin xyz="0.05 -0.1 -0.030" rpy="0 0 0"/>
         <axis xyz="0 1 0"/>
         <!-- <limit effort="10" velocity="5"/> -->
     </joint>
@@ -93,7 +93,7 @@
         </gazebo>
         <parent link="base_link"/>
         <child link="left_wheel"/>
-        <origin xyz="0.1325 -.015 -0.030" rpy="0 0 -1.5708"/>
+        <origin xyz="0.05 0.1 -0.030" rpy="0 0 0"/>
         <axis xyz="0 1 0"/>
         <!-- <limit effort="10" velocity="5"/> -->
     </joint>
@@ -116,7 +116,7 @@
             </geometry>
         </visual>
         <inertial>
-            <mass value=".2"/>
+            <mass value=".05"/>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <!-- <inertia ixx=".0002866667" ixy="0" ixz="0" iyy=".0002866667" iyz="0" izz="0.00049"/> -->
             <inertia ixx=".000026667" ixy="0" ixz="0" iyy=".000026667" iyz="0" izz="0.00004"/>
@@ -128,7 +128,7 @@
         </gazebo>
         <parent link="base_link"/>
         <child link="back_wheel"/>
-        <origin xyz="-.06 0.0 -0.05" rpy="0 0 0"/>
+        <origin xyz="-.1 0.0 -0.055" rpy="0 0 0"/>
         <axis xyz="0 1 0"/>
         <!-- <limit effort="10" velocity="5"/> -->
     </joint>
@@ -162,7 +162,7 @@
         <child link="camera_link"/>
         <!-- <origin xyz="0.0  -.065  0.0" rpy="1.5708 1.5708 0"/> -->
         <!-- the camera plugin faces towards the +X axis by default-->
-        <origin xyz="0.0  -.065  0.0" rpy="0 0 0"/>
+        <origin xyz="0.105 0.0 0.0" rpy="0 0 0"/>
     </joint>
 
     <!-- a simulation workaround to fix the broken point cloud orientation -->
@@ -183,9 +183,9 @@
             <!-- 'physical' characteristics -->
             <leftJoint>left_joint</leftJoint>
             <rightJoint>right_joint</rightJoint>
-            <wheelSeparation>.28</wheelSeparation>
+            <wheelSeparation>.2</wheelSeparation>
             <wheelDiameter>0.12</wheelDiameter>
-            <wheelTorque>.25</wheelTorque>   <!-- in Nm -->
+            <wheelTorque>.196133</wheelTorque>   <!-- in Nm -->
 
             <!-- plugin characteristics -->
             <odometrySource>world</odometrySource> 
