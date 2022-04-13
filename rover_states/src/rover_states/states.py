@@ -195,7 +195,7 @@ class Waypoint(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['nav_finish', 'rc_preempt', 'error'],
                                    input_keys=['pose_target'],
-                                   output_keys=['status'])
+                                   output_keys=['status', 'rc_msg'])
 
         # create the client that will connect to move_base
         self.client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
@@ -206,6 +206,8 @@ class Waypoint(smach.State):
         # the pose target that WAYPOINT will use for navigation
         self._pose_target = None
         self.goal = None
+
+        self._rc_msg = None
 
     def execute(self, userdata):
 
@@ -241,6 +243,7 @@ class Waypoint(smach.State):
 
             if self._rc_preempt:
                 self._rc_preempt = False
+                userdata.rc_msg = json_message_converter.convert_ros_message_to_json(self._rc_msg)
                 rospy.logdebug("Preempted by RC.")
                 return 'rc_preempt'
 
@@ -274,8 +277,10 @@ class Waypoint(smach.State):
                 # set the flag to notify our main loop
                 self._target_update = True
         
-        if msg.rc_preempt:
-            self._rc_preempt = True
+        if msg.rc_preempt is not None:
+            if msg.rc_preempt:
+                self._rc_msg = msg.rc
+                self._rc_preempt = True
     
 class Manual(smach.State):
 
