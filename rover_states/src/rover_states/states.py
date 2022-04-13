@@ -408,6 +408,7 @@ def main():
 
     # declare userdata
     sm.userdata.pose_target = ""
+    sm.userdata.rc_msg = ""
     sm.userdata.end_status = ""
     sm.userdata.end_reason = ""
 
