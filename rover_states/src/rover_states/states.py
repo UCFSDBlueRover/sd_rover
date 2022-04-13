@@ -25,24 +25,23 @@ class Boot(smach.State):
 
         self.config = self.read_params() # TODO
 
-        # RX HEARTBEAT
-        rospy.Subscriber('/heartbeat', rov.Heartbeat, callback=self.hb_callback)
+        # checking that all input sources are up
+        # # RX HEARTBEAT
+        # rospy.Subscriber('/heartbeat', rov.Heartbeat, callback=self.hb_callback)
         # INIT message from GS
         rospy.Subscriber('/cmd', rov.Cmd, callback=self.cmd_callback)
         # GPS data 
         rospy.Subscriber('/fix', sensor.NavSatFix, callback=self.GPS_callback)
         # IMU data
         rospy.Subscriber('/imu', sensor.Imu, callback=self.IMU_callback)
-        # Camera data
-        # 
-        # odom?
+        # odom
+        rospy.Subscriber('/odom', nav.Odometry, callback=self.odom_callback)
 
-        self._hb_flag = False
+        # self._hb_flag = False
         self._cmd_flag = False
         self._gps_flag = False
         self._imu_flag = False
-
-        # RX data from all sensor stream topics
+        self._odom_flag = False
 
         # received ACK from all software modules (define list in XML/YAML format?)
 
@@ -58,30 +57,30 @@ class Boot(smach.State):
 
         while not rospy.is_shutdown():
 
-            if self._hb_flag and self._cmd_flag and self._gps_flag and self._imu_flag:
+            # if self._hb_flag and self._cmd_flag and self._gps_flag and self._imu_flag:
+            if self._cmd_flag and self._gps_flag and self._imu_flag and self._odom_flag:
                 rospy.logdebug("All sources up. Transitioning to STANDBY.")
                 # end the status timer
                 status_timer.shutdown()
-
                 return 'boot_success'
-
-            # what constitutes an error?
+            
             rate.sleep()
 
     def timer_status_callback(self, event):
 
         rospy.logdebug(
-            "\nHEARTBEAT: \t{}\n".format(self._hb_flag) + \
-            "CMD: \t\t{}\n".format(self._cmd_flag) + \
+            # "\nHEARTBEAT: \t{}\n".format(self._hb_flag) + \
+            "\nCMD: \t\t{}\n".format(self._cmd_flag) + \
             "GPS: \t\t{}\n".format(self._gps_flag) + \
-            "IMU: \t\t{}\n".format(self._imu_flag)
+            "IMU: \t\t{}\n".format(self._imu_flag) + \
+            "ODOM: \t\t{}\n".format(self._odom_flag)
         )
 
-    def hb_callback(self, msg):
+    # def hb_callback(self, msg):
 
-        # make sure it's a valid message
-        if msg.time is not None:
-            self._hb_flag = True
+    #     # make sure it's a valid message
+    #     if msg.time is not None:
+    #         self._hb_flag = True
 
     def cmd_callback(self, msg):
 
