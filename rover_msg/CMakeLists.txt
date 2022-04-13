@@ -57,6 +57,7 @@ add_message_files(
   Cmd.msg
   Telemetry.msg
   Motors.msg
+  RC.msg
 )
 
 ## Generate services in the 'srv' folder
