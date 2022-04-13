@@ -60,6 +60,30 @@ def str_to_command(input: list) -> rov.Cmd:
 
     return cmd
 
+def str_to_rc_command(input: list) -> rov.Cmd:
+
+    """
+    Converts "rc burst" style strings into Cmd messages
+    """
+
+    cmd = rov.Cmd()
+
+    # rc fields
+    cmd.rc.forward  = int(input[0])
+    cmd.rc.reverse  = int(input[1])
+    cmd.rc.left     = int(input[2])
+    cmd.rc.right    = int(input[3])
+
+    # "burst" messages always throw this flag to set state machine to MANUAL
+    cmd.rc_preempt.data = True
+    # all other flags are false
+    cmd.start.data          = False
+    cmd.cancel.data         = False
+    cmd.shutdown.data       = False
+    cmd.pose_preempt.data   = False
+    
+    return cmd    
+
 def ticks_to_message(input: list) -> Tuple[std.Int64, std.Int64]:
 
     l_ticks = std.Int64()
@@ -171,7 +195,13 @@ def main():
             nmea_pub.publish(nmea_sentence)
         # commands from ground station
         elif prefix == '$CMD':
-            cmd_msg = str_to_command(input_split[1:])
+            # switch on cmd message type
+            cmd_type = input_split[1]
+            if cmd_type == 'MAN1':
+                cmd_msg = str_to_command(input_split[2:])
+            elif cmd_type == 'MAN2':
+                cmd_msg = str_to_rc_command(input_split[2:])
+
             # cmd = json_message_converter.convert_json_to_ros_message('rover_msg/Cmd', input_split[1])
             if cmd_msg is not None:
                 cmd_pub.publish(cmd_msg)
