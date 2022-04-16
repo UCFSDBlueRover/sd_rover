@@ -79,6 +79,7 @@ motor_msg = rov.Motors()
 
 prevDiff = 0
 prevPrevDiff = 0
+ready_flag = False
 
 def calc_pwm_values(cmd_vel: geom.Twist, encoders: Tuple) -> None:
 
@@ -91,6 +92,9 @@ def calc_pwm_values(cmd_vel: geom.Twist, encoders: Tuple) -> None:
     global pwm_update_time
     global prevDiff
     global prevPrevDiff
+    global ready_flag
+
+    ready_flag = False
 
     # unpack encoders
     enc1 = encoders[0]
@@ -159,10 +163,13 @@ def calc_pwm_values(cmd_vel: geom.Twist, encoders: Tuple) -> None:
     # print("LEFT: {}\n".format(pwmLeftReq))
     # print("RIGHT: {}\n".format(pwmRightReq))
 
+    ready_flag = True
+
 def main():
 
     global motor_msg
     global pwm_update_time
+    global ready_flag
 
     rospy.init_node('motor_control', anonymous=True, log_level=rospy.DEBUG)
 
@@ -194,7 +201,12 @@ def main():
         else:
             clear_flag = False
 
-        motor_pub.publish(motor_msg)
+        if ready_flag:
+            try:
+                motor_pub.publish(motor_msg)
+            except Exception as e:
+                rospy.log_debug("Threw exception, not publishing motor message.")
+            ready_flag = False
 
         rate.sleep()
 
