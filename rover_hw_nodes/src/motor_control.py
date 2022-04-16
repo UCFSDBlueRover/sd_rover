@@ -34,10 +34,10 @@ K_P = 530   # TODO
 b = 0 # TODO
  
 # Correction multiplier for drift. Chosen through experimentation.
-DRIFT_MULTIPLIER = 120 # TODO
+DRIFT_MULTIPLIER = 1 # TODO
  
 # Turning PWM output (0 = min, 100 = max for PWM values)
-PWM_TURN = 60
+PWM_TURN = 30
 
 # Set maximum and minimum limits for the PWM values
 PWM_MIN_LEFT = 9
@@ -192,7 +192,7 @@ def main():
     while not rospy.is_shutdown():
 
         # if we haven't updated pwm in a while, stop the motors
-        if (rospy.Time.now() - pwm_update_time) > rospy.Duration(2.5):
+        if (rospy.Time.now() - pwm_update_time) > rospy.Duration(.5):
             if not clear_flag:
                 rospy.logdebug("Reached PWM timeout; clearing PWM")
             clear_flag = True
@@ -202,10 +202,17 @@ def main():
             clear_flag = False
 
         if ready_flag:
+
+            # last ditch effort to stop out-of-bounds values
+            if not 0 <= motor_msg.pwm1.data <= 100:
+                continue
+            elif not 0 <= motor_msg.pwm2.data <= 100:
+                continue
+
             try:
                 motor_pub.publish(motor_msg)
             except Exception as e:
-                rospy.log_debug("Threw exception, not publishing motor message.")
+                rospy.logdebug("Threw exception, not publishing motor message.")
             ready_flag = False
 
         rate.sleep()
