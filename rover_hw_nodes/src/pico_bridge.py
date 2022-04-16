@@ -160,7 +160,7 @@ def main():
     r_tick_pub = rospy.Publisher('/right_ticks', std.Int64, queue_size=1)
 
     # attempt to establish serial connection with the pico
-    _port = '/dev/ttyACM1'
+    _port = '/dev/ttyACM0'
     ser = serial.Serial(
         port=_port,
         baudrate=115200,
