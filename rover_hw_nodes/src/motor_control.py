@@ -41,9 +41,9 @@ PWM_TURN = 30
 
 # Set maximum and minimum limits for the PWM values
 PWM_MIN_LEFT = 9
-PWM_MAX_LEFT = 100      
+PWM_MAX_LEFT = 50      
 PWM_MIN_RIGHT = 10      # TODO: the minimum value required to make the rover move
-PWM_MAX_RIGHT = 100
+PWM_MAX_RIGHT = 50
 
 RPM = 250
 MAX_LINEAR_X = METERS_PER_REV / (RPM / 60)
@@ -155,10 +155,10 @@ def calc_pwm_values(cmd_vel: geom.Twist, encoders: Tuple) -> None:
     pwmRightReq = min(PWM_MAX_RIGHT, pwmRightReq)
 
     # update the Motors message
-    motor_msg.dir1.data = left_dir
-    motor_msg.pwm1.data = pwmLeftReq
-    motor_msg.dir2.data = right_dir
-    motor_msg.pwm2.data = pwmRightReq
+    motor_msg.dir2.data = left_dir
+    motor_msg.pwm2.data = pwmLeftReq
+    motor_msg.dir1.data = right_dir
+    motor_msg.pwm1.data = pwmRightReq
 
     # print("LEFT: {}\n".format(pwmLeftReq))
     # print("RIGHT: {}\n".format(pwmRightReq))
