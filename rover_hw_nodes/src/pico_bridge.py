@@ -180,11 +180,18 @@ def main():
 
     while not rospy.is_shutdown():
 
-        # read input lines, decode bytes -> string
+        # read input lines
         try:
-            input = ser.readline().decode().strip()
+            input = ser.readline()
         except serial.SerialException as e:
             rospy.logerr_once("Issue with serial read: {}".format(e))
+            continue
+        
+        # attempt to decode input, strip whitespace
+        try:
+            input = input.decode().strip()
+        except UnicodeDecodeError as e:
+            rospy.logerr("Decoding error: {}".format(e))
             continue
 
         # 'tokenize' by spaces
