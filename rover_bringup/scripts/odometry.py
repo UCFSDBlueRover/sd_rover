@@ -41,19 +41,26 @@ class encoderState():
         self.prevCount = 0
         self.velocity = 0
 
-def tick_cb(ticks: std.Int64, enc: encoderState) -> None:
+        self.flag = False
+
+def tick_cb(tick_msg: std.Int64, enc: encoderState) -> None:
 
     """
     When we receive ticks, use the encoderState provided to calculate velocity.
     """
 
+    if enc.flag:
+        enc.prevCount = tick_msg.data
+        enc.flag = True
+        return
+
     # ticks since last callback
-    ticks = ticks.data - enc.prevCount
+    ticks = tick_msg.data - enc.prevCount
     # speed from ticks
-    enc.velocity = ticks / TICKS_PER_METER / (rospy.Time.now() - enc.prevTime).to_sec()
+    enc.velocity = (ticks / TICKS_PER_METER) / ((rospy.Time.now() - enc.prevTime).to_sec())
     # update timestamp and prevCount
     enc.prevTime = rospy.Time.now()
-    enc.prevCount = ticks.data
+    enc.prevCount = tick_msg.data
 
 def main():
 
@@ -76,7 +83,7 @@ def main():
     y = 0
     theta = 0
 
-    rate = rospy.Rate(10)   # loop rate: 10Hz
+    rate = rospy.Rate(20)   # loop rate: 10Hz
     while not rospy.is_shutdown():
 
         timestamp = rospy.Time.now()
@@ -84,6 +91,7 @@ def main():
         # calculate velocities in x, y, theta from wheel velocities
         v_left = left_enc.velocity
         v_right = right_enc.velocity
+        # rospy.logdebug("v_left: {}\t v_right: {}".format(v_left, v_right))
 
         v_x = ((v_left + v_right) / 2) * K_P
         v_y = 0     # robot can't move sideways
@@ -101,16 +109,21 @@ def main():
         theta += delta_theta
 
         # broadcast tf transform
+        # tf header
         odom_trans = geom.TransformStamped()
         odom_trans.header.stamp = timestamp
         odom_trans.header.frame_id = "odom"
         odom_trans.child_frame_id = "base_link"
-        
+        # tf translation
         odom_trans.transform.translation.x = x
         odom_trans.transform.translation.y = y
         odom_trans.transform.translation.z = 0.0    # we don't move up and down
-        odom_quat = tf_conversions.transformations.quaternion_from_euler(0, 0, theta)
-        odom_trans.transform.rotation = odom_quat
+        # tf rotation
+        odom_rot_quat = tf_conversions.transformations.quaternion_from_euler(0, 0, theta)
+        odom_trans.transform.rotation.x = odom_rot_quat[0]
+        odom_trans.transform.rotation.y = odom_rot_quat[1]
+        odom_trans.transform.rotation.z = odom_rot_quat[2]
+        odom_trans.transform.rotation.w = odom_rot_quat[3]
 
         tf_br.sendTransform(odom_trans)
 
@@ -123,7 +136,10 @@ def main():
         odom.pose.pose.position.x = x
         odom.pose.pose.position.y = y
         odom.pose.pose.position.z = 0.0     # we "never" move in Z
-        odom.pose.pose.orientation = odom_quat
+        odom.pose.pose.orientation.x = odom_rot_quat[0]
+        odom.pose.pose.orientation.y = odom_rot_quat[1]
+        odom.pose.pose.orientation.z = odom_rot_quat[2]
+        odom.pose.pose.orientation.w = odom_rot_quat[3]
 
         # set the velocity
         odom.child_frame_id = "base_link"
