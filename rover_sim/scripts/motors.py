@@ -38,10 +38,10 @@ def on_press(key):
         twist.angular.z = .15
         change_flag = True
     if( k == 'up' ):
-        twist.linear.x = .09
+        twist.linear.x = .04
         change_flag = True
     if( k == 'down' ):
-        twist.linear.x = -.09
+        twist.linear.x = -.04
         change_flag = True      
 
     # update published twist message
