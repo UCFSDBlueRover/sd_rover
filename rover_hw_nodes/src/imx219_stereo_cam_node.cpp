@@ -54,11 +54,11 @@ void buildImuMsg(IMU_ST_ANGLES_DATA stAngles, IMU_ST_SENSOR_DATA stGyroRawData,
     quatMsg = tf2::toMsg(quat);
 
     // populate orientation with quaternion msg
-    // TODO: these values are obviously not based on anything, need to estimate/derive values
+    // -1 for first value because the internet said so
     imuMsg->orientation = quatMsg;
-    boost::array<double, 9> orientationCovariance = { 1.,0.,0.,
-                                                      0.,1.,0.,
-                                                      0.,0.,1.};
+    boost::array<double, 9> orientationCovariance = { -1.,0.,0.,
+                                                       0.,1.,0.,
+                                                       0.,0.,1.};
     imuMsg->orientation_covariance = orientationCovariance;
 
     // angular velocity from gyroscopes
@@ -69,9 +69,10 @@ void buildImuMsg(IMU_ST_ANGLES_DATA stAngles, IMU_ST_SENSOR_DATA stGyroRawData,
     imuMsg->angular_velocity = angularVel;
 
     // populate angular velocity covariance
-    boost::array<double, 9> angularVelCovariance = { 1.,0.,0.,
-                                                     0.,1.,0.,
-                                                     0.,0.,1.};
+    // -1 for first value because the internet said so
+    boost::array<double, 9> angularVelCovariance = { -1.,0.,0.,
+                                                      0.,1.,0.,
+                                                      0.,0.,1.};
     imuMsg->angular_velocity_covariance = angularVelCovariance;
 
     // linear accel from accelerometers
@@ -82,12 +83,11 @@ void buildImuMsg(IMU_ST_ANGLES_DATA stAngles, IMU_ST_SENSOR_DATA stGyroRawData,
     imuMsg->linear_acceleration = linearAccel;
 
     // populate linear accel covariance
-    // TODO: these values are obviously not based on anything, need to estimate/derive values
-    boost::array<double, 9> linearAccelCovariance = { 1.,0.,0.,
-                                                      0.,1.,0.,
-                                                      0.,0.,1.};
+    // -1 for first value because the internet said so
+    boost::array<double, 9> linearAccelCovariance = { -1.,0.,0.,
+                                                       0.,1.,0.,
+                                                       0.,0.,1.};
     imuMsg->linear_acceleration_covariance = linearAccelCovariance;
-
 }
 
 
