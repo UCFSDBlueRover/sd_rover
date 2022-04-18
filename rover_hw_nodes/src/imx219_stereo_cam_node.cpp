@@ -38,7 +38,7 @@ void buildImuMsg(IMU_ST_ANGLES_DATA stAngles, IMU_ST_SENSOR_DATA stGyroRawData,
     // populate header
     imuMsg->header = std_msgs::Header();
     imuMsg->header.stamp = ros::Time::now();
-    imuMsg->header.frame_id = "imu";
+    imuMsg->header.frame_id = "imu_link";
 
     // orientation: convert RPY from degrees to radians
     tf2::Quaternion quat;
@@ -117,7 +117,7 @@ int main(int argc, char **argv)
     // im0_info.loadCameraInfo(url_1);
 
     // imu message
-    ros::Publisher imu_pub = n.advertise<sensor_msgs::Imu>("/imu", 10);
+    ros::Publisher imu_pub = n.advertise<sensor_msgs::Imu>("/rover/imu", 10);
 
     // configure the IMU fields
     IMU_EN_SENSOR_TYPE enMotionSensorType;
