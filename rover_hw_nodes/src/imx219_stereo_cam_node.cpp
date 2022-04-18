@@ -48,10 +48,19 @@ void buildImuMsg(IMU_ST_ANGLES_DATA stAngles, IMU_ST_SENSOR_DATA stGyroRawData,
 
     // create quaternion from RPY
     quat.setRPY(rollRad, pitchRad, yawRad);
-    quat.normalize();
+
+    // create transform quat to force IMU data to match REP-103
+    tf2::Quaternion q_rot;
+    double yaw = -1.57179; // - pi / 2  
+    double roll = 1.57179; // pi / 2
+    q_rot.setRPY(roll, 0, yaw);
+    
+    // apply quat transform
+    q_new = quat * q_rot;
+    q_new.normalize();
 
     // create a geometry_msgs/Quaternion
-    quatMsg = tf2::toMsg(quat);
+    quatMsg = tf2::toMsg(q_new);
 
     // populate orientation with quaternion msg
     // -1 for first value because the internet said so
