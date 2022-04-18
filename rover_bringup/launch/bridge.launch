@@ -9,8 +9,8 @@
     </node>
 
     <!-- listen to GPS output of pico_bridge and publish NavSatFix messages -->
-    <node pkg="nmea_navsat_driver" type="nmea_topic_driver" name="gps_topic_listener">
+    <!-- <node pkg="nmea_navsat_driver" type="nmea_topic_driver" name="gps_topic_listener">
         <remap from="/fix" to="$(arg gps_topic)"/>
-    </node>
+    </node> -->
 
 </launch>
