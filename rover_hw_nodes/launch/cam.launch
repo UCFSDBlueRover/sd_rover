@@ -26,7 +26,7 @@
         <remap from="/set_camera_info" to="$(arg camera_name)/left/set_camera_info" />
     </node>
 
-    <node pkg="nodelet" type="nodelet" name="$(arg camera_name)_right_nodelet" args="load gscam/GSCamNodelet $(arg camera_name)_nodelet_manager" output="screen">
+    <!-- <node pkg="nodelet" type="nodelet" name="$(arg camera_name)_right_nodelet" args="load gscam/GSCamNodelet $(arg camera_name)_nodelet_manager" output="screen">
         <param name="camera_name" value="$(arg camera_name)" />
         <param name="camera_info_url" value="package://rover_hw_nodes/config/stereo_right.yaml" />
         <param name="gscam_config" value="nvarguscamerasrc sensor-id=1 sensor-mode=$(arg sensor_mode) !
@@ -39,7 +39,7 @@
         <param name="sync_sink" value="true" />
         <remap from="/camera/image_raw" to="$(arg camera_name)/right/image_raw" />
         <remap from="/set_camera_info" to="$(arg camera_name)/right/set_camera_info" />
-    </node>
+    </node> -->
 
     <!-- <group ns="stereo">
         <include file="$(find stereo_image_proc)/launch/stereo_image_proc.launch">
@@ -47,7 +47,7 @@
         </include>
     </group> -->
 
-    <group ns="stereo">
+    <!-- <group ns="stereo">
         <node pkg="stereo_image_proc" type="stereo_image_proc" name="stereo_image_proc" output="screen">
             <param name="approximate_sync"  value="false"/>
             <param name="shrink_scale"      value="4" />
@@ -56,6 +56,6 @@
             <remap from="right/camera_info" to="right/camera_info" />
             <remap from="right/image_raw"   to="right/image_raw" />
         </node>
-    </group>
+    </group> -->
 
 </launch>
