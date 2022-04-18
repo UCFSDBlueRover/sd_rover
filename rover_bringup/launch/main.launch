@@ -7,6 +7,7 @@
     <!-- configure args -->
     <arg name="robot" default="rover_v3"/>
     <arg name="robot_desc" default="$(find rover_sim)/models/$(arg robot)/model.urdf" />
+    <arg name="cam" default="true" />
     <arg name="nav" default="true" />
     <arg name="rviz" default="true"/>   <!-- use rviz window for robot information -->
     <arg name="rviz_cfg" default="$(find rover_sim)/rviz/rover_v1.rviz" />
@@ -29,7 +30,7 @@
     <!-- IMU -->
     <node name="imu_node" pkg="rover_hw_nodes" type="imx219_stereo_cam_node" output="screen" />
     <!-- stereo camera -->
-    <include file="$(find rover_hw_nodes)/launch/cam.launch">
+    <include if="$(arg cam)" file="$(find rover_hw_nodes)/launch/cam.launch">
     </include>
     
     <!-- pico_bridge -->
@@ -38,15 +39,21 @@
     </include>
 
     <!-- odometry from encoders -->
-    <node name="enc_odometry" pkg="rover_bringup" type="odometry.py" output="screen" />
+    <node name="enc_odometry" pkg="rover_bringup" type="odometry_2.py" output="screen" />
 
     <!-- telemetry -->
     <node name="telemetry_pub" pkg="rover_bringup" type="telemetry_pub.py" output="screen" />
+
+    <!-- motor control script -->
+    <node name="motor_control" pkg="rover_hw_nodes" type="motor_control.py" output="screen" />
 
     <!-- logging -->
     <include file="$(find rover_bringup)/launch/logging.launch" >
         <arg name="filename" value="main"/>
         <!-- <arg name="location" value="" /> -->
     </include>
+
+    <!-- navigation -->
+    <include file="$(find rover_nav)/launch/nav.launch" />
 
 </launch>
