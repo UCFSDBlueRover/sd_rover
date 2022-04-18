@@ -93,8 +93,13 @@ def ticks_to_message(input: list) -> Tuple[std.Int64, std.Int64]:
     l_ticks = std.Int64()
     r_ticks = std.Int64()
 
-    l_ticks.data = int(input[1])
-    r_ticks.data = int(input[3])
+    # ticks are reported strangely
+    try:
+        l_ticks.data = int(input[3])    # encoder 2 on PICO
+        r_ticks.data = int(input[1])    # encoder 1 on PICO
+    except ValueError as e:
+        rospy.log_err('Invalid ticks data')
+        return None
 
     return (l_ticks, r_ticks)
 
@@ -155,9 +160,9 @@ def main():
     # publishers for data streams FROM the pico
     nmea_pub = rospy.Publisher('nmea_sentence', nmea.Sentence, queue_size=1)
     cmd_pub = rospy.Publisher('/cmd', rov.Cmd, queue_size=1)
-
     l_tick_pub = rospy.Publisher('/left_ticks', std.Int64, queue_size=1)
     r_tick_pub = rospy.Publisher('/right_ticks', std.Int64, queue_size=1)
+    err_pub = rospy.Publisher('/pico_errors', std.String, queue_size=1)
 
     # attempt to establish serial connection with the pico
     _port = '/dev/ttyACM0'
@@ -220,8 +225,15 @@ def main():
             # get ticks messages from string
             left_tick, right_tick = ticks_to_message(input_split[1:])
             # publish tick messages
-            l_tick_pub.publish(left_tick)
-            r_tick_pub.publish(right_tick)
+            if left_tick is not None:
+                l_tick_pub.publish(left_tick)
+            if right_tick is not None:
+                r_tick_pub.publish(right_tick)
+        # publish error messages
+        elif prefix == '$ERR':
+            msg = std.String()
+            msg.data = "".join(input_split[1])
+            err_pub.publish(msg)
         else:
             rospy.logdebug("Unhandled prefix: {}".format(input))
 
