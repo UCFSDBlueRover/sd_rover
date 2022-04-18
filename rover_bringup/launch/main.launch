@@ -20,6 +20,9 @@
         <param name="tf_prefix" type="string" value=""/>
     </node>
 
+    <!-- publish (incorrect) joint states-->
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+
     <!-- launches rviz with specified configuration (if CLI arg is true)-->
     <node if="$(arg rviz)" name="rviz" pkg="rviz" type="rviz" args="-d $(arg rviz_cfg)"/>
 
@@ -33,6 +36,9 @@
     <include file="$(find rover_bringup)/launch/bridge.launch">
         <arg name="gps_topic" value="/rover/fix"/>
     </include>
+
+    <!-- odometry from encoders -->
+    <node name="enc_odometry" pkg="rover_bringup" type="odometry.py" output="screen" />
 
     <!-- telemetry -->
     <node name="telemetry_pub" pkg="rover_bringup" type="telemetry_pub.py" output="screen" />
