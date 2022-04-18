@@ -6,6 +6,7 @@
 
     <!-- configure args -->
     <arg name="robot" default="rover_v3"/>
+    <arg name="robot_desc" default="$(find rover_sim)/models/$(arg robot)/model.urdf" />
     <arg name="nav" default="true" />
     <arg name="rviz" default="true"/>   <!-- use rviz window for robot information -->
     <arg name="rviz_cfg" default="$(find rover_sim)/rviz/rover_v1.rviz" />
