@@ -64,7 +64,7 @@ def tick_cb(tick_msg: std.Int64, enc: encoderState) -> None:
 
 def main():
 
-    rospy.init_node('motor_control', anonymous=True, log_level=rospy.DEBUG)
+    rospy.init_node('odometry', anonymous=True, log_level=rospy.DEBUG)
 
     # publishers
     tf_br = tf2_ros.TransformBroadcaster()  # for odom transform
@@ -95,7 +95,7 @@ def main():
 
         v_x = ((v_left + v_right) / 2) * K_P
         v_y = 0     # robot can't move sideways
-        v_theta = ((v_right - v_left) / WHEEL_BASE) * K_P   # unicycle model
+        v_theta = ((v_left - v_right) / WHEEL_BASE) * K_P   # unicycle model
 
         # predict change in position
         dt = (timestamp - prevTime).to_sec()
