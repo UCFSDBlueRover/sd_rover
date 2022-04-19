@@ -25,7 +25,7 @@ TICKS_PER_REV = 48
 # Wheel radius (meters)
 WHEEL_RADIUS = .06 
 # Distance from center of left tire to center of right tire (meters)
-WHEEL_BASE = .205
+WHEEL_BASE = .190
 METERS_PER_REV = WHEEL_RADIUS * math.pi * 2
 REVS_PER_METER = 1 / METERS_PER_REV
 # could also be measured manually
@@ -113,24 +113,24 @@ def main():
         y += delta_y
         theta += delta_theta
 
-        # broadcast tf transform
-        # tf header
-        odom_trans = geom.TransformStamped()
-        odom_trans.header.stamp = timestamp
-        odom_trans.header.frame_id = "odom"
-        odom_trans.child_frame_id = "base_link"
-        # tf translation
-        odom_trans.transform.translation.x = x
-        odom_trans.transform.translation.y = y
-        odom_trans.transform.translation.z = 0.0    # we don't move up and down
+        # # broadcast tf transform
+        # # tf header
+        # odom_trans = geom.TransformStamped()
+        # odom_trans.header.stamp = timestamp
+        # odom_trans.header.frame_id = "odom"
+        # odom_trans.child_frame_id = "base_link"
+        # # tf translation
+        # odom_trans.transform.translation.x = x
+        # odom_trans.transform.translation.y = y
+        # odom_trans.transform.translation.z = 0.0    # we don't move up and down
         # tf rotation
         odom_rot_quat = tf_conversions.transformations.quaternion_from_euler(0, 0, theta)
-        odom_trans.transform.rotation.x = odom_rot_quat[0]
-        odom_trans.transform.rotation.y = odom_rot_quat[1]
-        odom_trans.transform.rotation.z = odom_rot_quat[2]
-        odom_trans.transform.rotation.w = odom_rot_quat[3]
+        # odom_trans.transform.rotation.x = odom_rot_quat[0]
+        # odom_trans.transform.rotation.y = odom_rot_quat[1]
+        # odom_trans.transform.rotation.z = odom_rot_quat[2]
+        # odom_trans.transform.rotation.w = odom_rot_quat[3]
 
-        tf_br.sendTransform(odom_trans)
+        # tf_br.sendTransform(odom_trans)
 
         # create Odometry message
         odom = nav.Odometry()

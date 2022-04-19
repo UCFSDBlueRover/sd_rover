@@ -19,8 +19,7 @@ TICKS_PER_REV = 48
 # Wheel radius (meters)
 WHEEL_RADIUS = .06 
 # Distance from center of left tire to center of right tire (meters)
-WHEEL_BASE = .200
-
+WHEEL_BASE = .190
 METERS_PER_REV = WHEEL_RADIUS * math.pi * 2
 REVS_PER_METER = 1 / METERS_PER_REV
 # could also be measured manually
@@ -28,21 +27,22 @@ TICKS_PER_METER = TICKS_PER_REV * REVS_PER_METER
 
 # Proportional constant of PWM-Linear Velocity relationship
 # measured, not derived
-K_P = 530   # TODO
+# K_P = 530   # TODO
+K_P = 183.33
 
 # Y-intercept for the PWM-Linear Velocity relationship for the robot
-b = 0 # TODO
+b = 8 # TODO
  
 # Correction multiplier for drift. Chosen through experimentation.
-DRIFT_MULTIPLIER = 1 # TODO
+DRIFT_MULTIPLIER = 0 # TODO
  
 # Turning PWM output (0 = min, 100 = max for PWM values)
 PWM_TURN = 30
 
 # Set maximum and minimum limits for the PWM values
-PWM_MIN_LEFT = 9
+PWM_MIN_LEFT = 20
 PWM_MAX_LEFT = 50      
-PWM_MIN_RIGHT = 10      # TODO: the minimum value required to make the rover move
+PWM_MIN_RIGHT = 20      # TODO: the minimum value required to make the rover move
 PWM_MAX_RIGHT = 50
 
 RPM = 250
@@ -69,7 +69,8 @@ def tick_cb(tick_msg: std.Int64, enc: encoderState) -> None:
     # get ticks since last callback
     ticks = tick_msg.data - enc.prevCount
     # get speed from ticks
-    enc.velocity = ticks / TICKS_PER_METER / (rospy.Time.now() - enc.prevTime).to_sec()
+    enc.velocity = (ticks / TICKS_PER_METER) / ((rospy.Time.now() - enc.prevTime).to_sec())
+    # rospy.logdebug('vel: {}'.format(enc.velocity))
     # update timestamp and prevCount
     enc.prevTime = rospy.Time.now()
     enc.prevCount = tick_msg.data
@@ -132,7 +133,9 @@ def calc_pwm_values(cmd_vel: geom.Twist, encoders: Tuple) -> None:
     else:
         # average out differences in wheel velocities
         diff = enc1.velocity - enc2.velocity
+        
         avgDiff = (diff + prevDiff + prevPrevDiff) / 3  
+        # print("avgDiff: {}".format(avgDiff))
         prevPrevDiff = prevDiff
         prevDiff = diff
 
@@ -160,7 +163,7 @@ def calc_pwm_values(cmd_vel: geom.Twist, encoders: Tuple) -> None:
     motor_msg.dir1.data = right_dir
     motor_msg.pwm1.data = pwmRightReq
 
-    # print("LEFT: {}\n".format(pwmLeftReq))
+    # print("LEFT: {}\t RIGHT: {}".format(pwmLeftReq, pwmRightReq))
     # print("RIGHT: {}\n".format(pwmRightReq))
 
     ready_flag = True
