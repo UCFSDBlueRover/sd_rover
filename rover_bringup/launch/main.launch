@@ -47,6 +47,9 @@
     <!-- motor control script -->
     <node name="motor_control" pkg="rover_hw_nodes" type="motor_control.py" output="screen" />
 
+    <!-- state machine -->
+    <node name="states" pkg="rover_states" type="state_machine.py" output="screen" />
+
     <!-- logging -->
     <include file="$(find rover_bringup)/launch/logging.launch" >
         <arg name="filename" value="main"/>
